@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+venv/
+.env
+
+# Data & results (track via LFS or external link if large)
+data/raw/
+data/*.zip
+results/*.mp4
+*.pth
+*.ckpt
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
