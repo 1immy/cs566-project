@@ -1,7 +1,9 @@
 # CS 566 Final Project — [Project Title TBD]
 
 **Team:** Adrian, Limo, Ethan, Jack
+
 **Course:** CS 566 Introduction to Computer Vision, Fall 2026 (Prof. Mohit Gupta)
+
 **Project webpage:** TBD
 
 ## Overview
