@@ -2,7 +2,7 @@
 
 **Team:** Adrian, Limo, Jack, Ethan
 **Course:** CS 566 Introduction to Computer Vision, Fall 2026 (Prof. Mohit Gupta)
-**Project webpage:** [link once gh-pages is live]
+**Project webpage:** https://1immy.github.io/cs566-project/
 
 ## Overview
 Single-photon (SPAD) cameras capture thousands of binary frames per second, where each pixel only records whether a photon arrived during the exposure — a single frame is meaningless, and a clean image only emerges from aligning and merging a burst. We're testing whether history-rejection heuristics from real-time temporal anti-aliasing (TAA) in game engines — neighborhood clamping, motion-adaptive blending — improve classical align-and-merge reconstruction of single-photon bursts, especially under fast motion and disocclusion. We evaluate on the Single Photon Challenge benchmark (co-organized by Prof. Gupta's lab), comparing our TAA-augmented pipeline against naive averaging and hierarchical block-alignment baselines via PSNR/SSIM and a failure analysis across motion speed.
