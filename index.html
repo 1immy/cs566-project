@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Temporal Anti-Aliasing for Single-Photon Reconstruction — CS 566 Final Project</title>
+<title>Temporal Anti-Aliasing for Single-Photon Reconstruction: CS 566 Final Project</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,600&family=Inter:wght@500;600&display=swap" rel="stylesheet">
@@ -31,11 +31,11 @@
       <h1>Temporal Anti-Aliasing for Single-Photon Reconstruction</h1>
       <p class="authors">Adrian &middot; Limo &middot; Jack &middot; Ethan</p>
       <p class="affiliation">University of Wisconsin&ndash;Madison</p>
-      <p class="course-line">CS 566: Introduction to Computer Vision &mdash; Course Project<br>Proposal submitted September 29, 2026</p>
+      <p class="course-line">CS 566: Introduction to Computer Vision, Course Project<br>Proposal submitted September 29, 2026</p>
 
       <div class="abstract">
         <h2 class="abstract-label">Abstract</h2>
-        <p>Single-photon avalanche diode (SPAD) cameras capture high-speed bursts of binary frames, where each pixel records only whether a photon arrived during a given exposure. A single frame carries almost no usable signal; a clean image only emerges from aligning and merging an entire burst (quanta burst photography). This project investigates single-photon image reconstruction under motion, specifically whether history-rejection heuristics from real-time temporal anti-aliasing (TAA) &mdash; neighborhood clamping and motion-adaptive blending &mdash; improve classical align-and-merge reconstruction, particularly under fast motion and disocclusion. We evaluate on the Single Photon Challenge benchmark, co-organized by Prof.&nbsp;Gupta's lab, comparing a TAA-augmented pipeline against naive-averaging and hierarchical block-alignment baselines.</p>
+        <p>Single-photon avalanche diode (SPAD) cameras capture high-speed bursts of binary frames, where each pixel records only whether a photon arrived during a given exposure. A single frame carries almost no usable signal; a clean image only emerges from aligning and merging an entire burst (quanta burst photography). This project investigates single-photon image reconstruction under motion, specifically whether history-rejection heuristics from real-time temporal anti-aliasing (TAA), namely neighborhood clamping and motion-adaptive blending, improve classical align-and-merge reconstruction, particularly under fast motion and disocclusion. We evaluate on the Single Photon Challenge benchmark, co-organized by Prof.&nbsp;Gupta's lab, comparing a TAA-augmented pipeline against naive-averaging and hierarchical block-alignment baselines.</p>
       </div>
     </header>
 
@@ -45,15 +45,15 @@
 
         <section id="introduction">
           <h2>Introduction</h2>
-          <p>Single-photon avalanche diode (SPAD) cameras capture high-speed bursts of binary frames, where each pixel records only whether a photon arrived during a given exposure. A single frame carries almost no usable signal; a clean image only emerges from aligning and merging an entire burst, a process known as quanta burst photography. We address <strong>single-photon image reconstruction under motion</strong>: specifically, whether history-rejection heuristics from real-time temporal anti-aliasing (TAA) &mdash; neighborhood clamping and motion-adaptive blending &mdash; improve classical align-and-merge reconstruction, especially under fast motion and disocclusion.</p>
-          <p>The standard SPAD reconstruction pipeline (estimate motion, align, merge) is structurally identical to temporal anti-aliasing in real-time rendering, yet this connection does not appear to have been explored in prior work. Bringing history-rejection techniques developed for real-time graphics into photon-level reconstruction offers a genuinely cross-domain angle with a clear, testable hypothesis. SPAD arrays are also an emerging sensor technology &mdash; megapixel-scale arrays now exist &mdash; which makes the underlying reconstruction problem increasingly practical to study.</p>
+          <p>Single-photon avalanche diode (SPAD) cameras capture high-speed bursts of binary frames, where each pixel records only whether a photon arrived during a given exposure. A single frame carries almost no usable signal; a clean image only emerges from aligning and merging an entire burst, a process known as quanta burst photography. We address <strong>single-photon image reconstruction under motion</strong>: specifically, whether history-rejection heuristics from real-time temporal anti-aliasing (TAA), namely neighborhood clamping and motion-adaptive blending, improve classical align-and-merge reconstruction, especially under fast motion and disocclusion.</p>
+          <p>The standard SPAD reconstruction pipeline (estimate motion, align, merge) is structurally identical to temporal anti-aliasing in real-time rendering, yet this connection does not appear to have been explored in prior work. Bringing history-rejection techniques developed for real-time graphics into photon-level reconstruction offers a genuinely cross-domain angle with a clear, testable hypothesis. SPAD arrays are also an emerging sensor technology (megapixel-scale arrays now exist), which makes the underlying reconstruction problem increasingly practical to study.</p>
           <p>The project builds directly on Prof.&nbsp;Gupta's own quanta burst photography research and the Single Photon Challenge benchmark his lab co-organized, giving the team a public dataset with ground truth rather than requiring custom data collection.</p>
         </section>
 
         <section id="related-work">
           <h2>Related Work</h2>
           <p><strong>Quanta burst photography</strong> (Gupta et al.) establishes the align-then-accumulate pipeline for SPAD bursts that serves as our baseline.</p>
-          <p><strong>Temporal anti-aliasing.</strong> A survey of TAA techniques (Yang et al., NVIDIA, 2020) catalogs the history-rejection methods &mdash; neighborhood clamping, motion-adaptive blend weights &mdash; that we adapt to this domain.</p>
+          <p><strong>Temporal anti-aliasing.</strong> A survey of TAA techniques (Yang et al., NVIDIA, 2020) catalogs the history-rejection methods we adapt to this domain: neighborhood clamping and motion-adaptive blend weights.</p>
           <p><strong>Single Photon Challenge.</strong> This benchmark provides the dataset and existing leaderboard submissions used for comparison in this work.</p>
         </section>
 
