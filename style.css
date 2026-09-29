@@ -55,9 +55,35 @@ h2 {
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
+  gap: 1.5rem;
 }
-.gallery img { width: 100%; border-radius: 6px; border: 1px solid var(--border); }
+.gallery img { width: 100%; border-radius: 6px; border: 1px solid var(--border); display: block; }
+
+figure {
+  margin: 1rem 0 0;
+  text-align: center;
+}
+figure img {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  display: block;
+}
+figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: left;
+}
+
+figure.diagram svg {
+  max-width: 480px;
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
 
 footer {
   text-align: center;
