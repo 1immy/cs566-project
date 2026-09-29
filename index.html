@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[Project Title] — CS 566 Final Project</title>
+<title>Temporal Anti-Aliasing for Single-Photon Reconstruction — CS 566 Final Project</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
-  <h1>[Project Title]</h1>
+  <h1>Temporal Anti-Aliasing for Single-Photon Reconstruction</h1>
   <p class="subtitle">CS 566: Introduction to Computer Vision — Fall 2026</p>
-  <p class="team">&middot; Adrian &middot; Limo &middot; Jack &middot; Ethan</p>
+  <p class="team">Adrian &middot; Limo &middot; Jack &middot; Ethan</p>
   <nav>
     <a href="#proposal">Proposal</a>
     <a href="#midterm">Mid-Term Report</a>
@@ -24,54 +24,149 @@
 
   <section id="overview">
     <h2>Overview</h2>
-    <p>[One paragraph: the problem, why it matters, and your approach at a glance. Fill in once the topic is finalized.]</p>
+    <p>Single-photon (SPAD) cameras capture thousands of binary frames per second, where each pixel only records whether a photon arrived — a single frame is nearly meaningless, and a clean image only emerges from aligning and merging a burst. This project tests whether history-rejection heuristics from real-time temporal anti-aliasing (TAA) in game engines &mdash; neighborhood clamping, motion-adaptive blending &mdash; improve classical align-and-merge reconstruction of single-photon bursts, especially under fast motion and disocclusion. We evaluate on the Single Photon Challenge benchmark, co-organized by Prof. Gupta's lab.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 640 660" role="img" aria-label="Per-frame pipeline: each binary frame is warped to align with the running history buffer, mismatched pixels are rejected before blending, and the updated history both loops into the next frame and, after the full burst, produces the merged output. A dashed path shows the naive-averaging baseline bypassing alignment and rejection entirely.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+          <marker id="arrowAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#2b4a6f"/>
+          </marker>
+        </defs>
+        <g font-family="-apple-system, Helvetica, Arial, sans-serif" fill="currentColor">
+
+          <!-- Baseline dashed bypass (drawn first, sits behind main flow) -->
+          <path d="M140,70 C70,70 55,180 55,300 C55,400 70,428 140,428" fill="none" stroke="#2b4a6f" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#arrowAccent)"/>
+          <text x="8" y="245" font-size="11" fill="#2b4a6f"><tspan x="8" dy="0">baseline:</tspan><tspan x="8" dy="14">naive average</tspan></text>
+
+          <!-- A: Binary frame -->
+          <rect x="140" y="30" width="220" height="56" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="250" y="53" font-size="13" font-weight="600" text-anchor="middle">Binary frame (t)</text>
+          <text x="250" y="70" font-size="11" text-anchor="middle">1 bit / pixel, from SPAD burst</text>
+
+          <!-- A -> B -->
+          <line x1="250" y1="86" x2="250" y2="150" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="262" y="121" font-size="11" text-anchor="start">per frame</text>
+
+          <!-- B: Align + warp -->
+          <rect x="140" y="150" width="220" height="56" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="250" y="173" font-size="13" font-weight="600" text-anchor="middle">Align + warp frame</text>
+          <text x="250" y="190" font-size="11" text-anchor="middle">motion estimate vs. history</text>
+
+          <!-- B -> E -->
+          <line x1="250" y1="206" x2="250" y2="270" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="262" y="241" font-size="11" text-anchor="start">warped frame</text>
+
+          <!-- E: Clamp / reject (TAA, accented) -->
+          <rect x="140" y="270" width="220" height="64" rx="8" fill="#2b4a6f" fill-opacity="0.07" stroke="#2b4a6f" stroke-width="2"/>
+          <text x="250" y="296" font-size="13" font-weight="600" text-anchor="middle" fill="#2b4a6f">Reject mismatched pixels</text>
+          <text x="250" y="313" font-size="11" text-anchor="middle" fill="#2b4a6f">TAA-style neighborhood clamp</text>
+
+          <!-- E -> F -->
+          <line x1="250" y1="334" x2="250" y2="400" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="262" y="370" font-size="11" text-anchor="start">kept pixels</text>
+
+          <!-- F: Adaptive blend -->
+          <rect x="140" y="400" width="220" height="56" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="250" y="423" font-size="13" font-weight="600" text-anchor="middle">Adaptive blend</text>
+          <text x="250" y="440" font-size="11" text-anchor="middle">weighted by local confidence</text>
+
+          <!-- D: History buffer (persistent state, double border) -->
+          <rect x="430" y="270" width="170" height="190" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="436" y="276" width="158" height="178" rx="6" fill="none" stroke="currentColor" stroke-width="1"/>
+          <text x="515" y="350" font-size="13" font-weight="600" text-anchor="middle">History buffer</text>
+          <text x="515" y="368" font-size="11" text-anchor="middle">persistent across burst,</text>
+          <text x="515" y="384" font-size="11" text-anchor="middle">updated every frame</text>
+
+          <!-- D -> E -->
+          <line x1="430" y1="300" x2="360" y2="300" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="395" y="292" font-size="11" text-anchor="middle">history (t&minus;1)</text>
+
+          <!-- D -> F -->
+          <line x1="430" y1="428" x2="360" y2="428" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="395" y="420" font-size="11" text-anchor="middle">prior estimate</text>
+
+          <!-- F -> D feedback loop -->
+          <path d="M360,445 C410,445 440,460 480,460" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="430" y="450" font-size="11" text-anchor="start">write: updated (t)</text>
+
+          <!-- D -> G exit -->
+          <path d="M515,460 L515,590 L360,590" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="523" y="525" font-size="11" text-anchor="start">after N frames</text>
+
+          <!-- G: Merged reconstruction -->
+          <rect x="140" y="560" width="220" height="60" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="250" y="586" font-size="13" font-weight="600" text-anchor="middle">Merged reconstruction</text>
+          <text x="250" y="603" font-size="11" text-anchor="middle">final output image</text>
+
+        </g>
+      </svg>
+      <figcaption>Per frame, the TAA-augmented pipeline (solid) warps the incoming binary frame to align with the running history buffer, rejects pixels where that alignment is unreliable &mdash; fast motion, disocclusion &mdash; and adaptively blends the rest back into the history, which feeds the next frame's clamp/blend step and, after the full burst, the final reconstruction. The naive-averaging baseline (dashed) instead accumulates every frame directly, with no alignment or rejection.</figcaption>
+    </figure>
   </section>
 
   <section id="proposal">
     <h2>Proposal <span class="date">(Sep 29, 2026)</span></h2>
     <h3>Problem statement</h3>
-    <p>[...]</p>
+    <p>Reconstructing clean images from single-photon bursts under motion, and testing whether TAA-style history rejection improves the classical align-and-merge pipeline compared to naive averaging and hierarchical block alignment baselines.</p>
     <h3>Motivation</h3>
-    <p>[...]</p>
+    <p>The standard SPAD reconstruction pipeline (estimate motion, align, merge) is structurally identical to TAA in real-time rendering &mdash; a cross-domain connection we haven't found explored elsewhere. The project also builds directly on Prof. Gupta's own quanta burst photography work and benchmark.</p>
     <h3>Approach</h3>
-    <p>[...]</p>
+    <p>Implement a baseline (naive averaging + hierarchical block alignment), then a TAA-augmented pipeline (neighborhood clamping, motion-adaptive blend weights, per-pixel confidence map), and compare both on Single Photon Challenge scenes and visionsim-generated motion sweeps.</p>
     <h3>Timeline</h3>
-    <p>[Insert timeline table or image]</p>
+    <p>Baseline + data pipeline (Sep 29&ndash;Oct 12) &rarr; TAA pipeline (Oct 13&ndash;26) &rarr; mid-term report (Oct 29) &rarr; failure analysis + iteration (Oct 30&ndash;Nov 19) &rarr; final evaluation (Nov 20&ndash;30) &rarr; presentation + webpage (Dec 1&ndash;10).</p>
+    <p><a href="proposal.pdf">Full proposal (PDF)</a></p>
   </section>
 
   <section id="midterm">
     <h2>Mid-Term Report <span class="date">(Oct 29, 2026)</span></h2>
-    <p><em>To be added.</em></p>
+    <p><em>Progress, current results, and difficulties encountered will be added following the mid-term milestone.</em></p>
   </section>
 
   <section id="results">
     <h2>Results</h2>
     <div class="gallery">
-      <!-- <img src="assets/result1.png" alt="Result description"> -->
-      <p><em>Images, videos, and comparison results will go here.</em></p>
+      <figure>
+        <img src="assets/result-baseline.png" alt="Reconstruction result from the naive averaging and block alignment baseline">
+        <figcaption>Baseline: naive averaging + block alignment</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/result-taa.png" alt="Reconstruction result from the TAA-augmented pipeline">
+        <figcaption>Ours: TAA-augmented reconstruction</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/result-groundtruth.png" alt="Ground truth reference image for the scene">
+        <figcaption>Ground truth</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/psnr-ssim-chart.png" alt="Chart of PSNR and SSIM scores across motion speeds, comparing baseline and TAA-augmented pipelines">
+        <figcaption>PSNR / SSIM vs. motion speed</figcaption>
+      </figure>
     </div>
   </section>
 
   <section id="discussion">
     <h2>Discussion</h2>
-    <p><em>Problems encountered, interesting findings, what worked and what didn't.</em></p>
+    <p><em>Analysis of where each method succeeds and fails, and what the failure analysis reveals about temporal reconstruction under fast motion, will be added as results come in.</em></p>
   </section>
 
   <section id="presentation">
     <h2>Final Presentation</h2>
-    <p><em>Link to slides/video will go here (Dec 1–10).</em></p>
+    <p><em>A link to the presentation slides/recording will be added here (Dec 1&ndash;10).</em></p>
   </section>
 
   <section id="code">
     <h2>Code</h2>
-    <p>Source code: <a href="https://github.com/[org]/[repo]">GitHub repository</a></p>
-    <p>Downloadable executable/scripts: [link]</p>
+    <p>Source code: <a href="https://github.com/[your-username]/[repo-name]">GitHub repository</a></p>
+    <p>Downloadable scripts and executables are available in the repository's <code>src/</code> directory.</p>
   </section>
 
 </main>
 
 <footer>
-  <p>Last updated: [date]</p>
+  <p>CS 566, Fall 2026 &middot; Last updated: September 29, 2026</p>
 </footer>
 
 </body>
