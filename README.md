@@ -4,7 +4,7 @@
 
 **Course:** CS 566 Introduction to Computer Vision, Fall 2026 (Prof. Mohit Gupta)
 
-**Project webpage:** TBD
+**Project webpage:** https://1immy.github.io/cs566-project/
 
 ## Overview
 One-paragraph description of the problem and approach — fill in once the topic is finalized.
