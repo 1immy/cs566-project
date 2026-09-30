@@ -95,6 +95,13 @@ body {
   margin: 0 0 0.35rem;
 }
 
+.author-emails {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+}
+
 .affiliation {
   font-style: italic;
   color: var(--muted);

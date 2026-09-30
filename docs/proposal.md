@@ -41,6 +41,12 @@ Course techniques used: image alignment/transformations, RANSAC, optical flow, t
 ## 7. Data
 **Single Photon Challenge** dataset: 50 simulated training scenes + 5 test scenes (ground truth private), each burst ("photon cube") = 1024 binary frames. Full set ~425 GB (~133 GB compressed, ~8.5 GB/chunk); plan to use 5–10 chunks, plus the small one-burst-per-scene sample already downloaded for early prototyping. Supplemented with our own synthetic sweeps via the lab's MIT-licensed **visionsim** simulator.
 
+**Preliminary result:** the data pipeline and naive-averaging baseline are already working — see below (also included as Figure 2 in the PDF version of this proposal).
+
+| Baseline reconstruction | Ground truth |
+|---|---|
+| ![Baseline reconstruction](../webpage/assets/result-baseline.png) | ![Ground truth](../webpage/assets/result-groundtruth.png) |
+
 ## 8. Evaluation plan
 - PSNR/SSIM on held-out training scenes (confirming with the instructor whether the leaderboard still accepts test-set submissions).
 - Failure analysis vs. motion speed using visionsim sweeps, directly answering "when does temporal reconstruction break down?"

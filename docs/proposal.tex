@@ -12,14 +12,15 @@
 \usepackage{enumitem}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{capt-of}
 
 \definecolor{accent}{RGB}{120,30,30}
 
 \setlength{\parindent}{1em}
 \setlength{\parskip}{0pt}
 
-\titlespacing*{\section}{0pt}{1.3ex plus 1ex minus .2ex}{1ex}
-\titlespacing*{\subsection}{0pt}{1ex plus .5ex minus .1ex}{.5ex}
+\titlespacing*{\section}{0pt}{1.0ex plus .8ex minus .2ex}{.8ex}
+\titlespacing*{\subsection}{0pt}{.8ex plus .4ex minus .1ex}{.4ex}
 \titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.6em}{}
 \titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
 
@@ -123,21 +124,34 @@ Figure~\ref{fig:pipeline} illustrates the per-frame mechanism of the TAA-augment
 \label{fig:pipeline}
 \end{figure*}
 
-We expect the TAA-augmented pipeline to outperform the baseline specifically in the fast-motion and disocclusion regime, where naive blending is most error-prone. The neighborhood clamp checks whether the aligned history agrees with the incoming frame's local neighborhood and rejects the pixel when it does not, and the confidence-weighted blend further downweights marginal agreement; the baseline has no analogous mechanism and blends every aligned pixel at a fixed or naively motion-scaled weight regardless of trustworthiness. Since both pipelines share the same alignment and merge backbone, any difference in reconstruction quality can be attributed to the history-rejection step itself.
+We expect the TAA-augmented pipeline to outperform the baseline in the fast-motion and disocclusion regime, where naive blending is most error-prone. The neighborhood clamp checks whether the aligned history agrees with the incoming frame's local neighborhood and rejects the pixel when it does not; the baseline has no analogous mechanism and blends every aligned pixel at a fixed or naively motion-scaled weight regardless of trustworthiness. Since both pipelines share the same alignment and merge backbone, any difference in quality is attributable to history-rejection alone.
 
 \section{Data}
 
 The Single Photon Challenge dataset provides 50 simulated training scenes and 5 test scenes (ground truth withheld), each burst (a ``photon cube'') consisting of 1{,}024 binary frames. The full set is approximately 425~GB; we will work with a 5--10 chunk subset (roughly 8.5~GB per chunk), supplemented with our own synthetic motion sweeps generated via the MIT-licensed visionsim simulator.
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.4\columnwidth]{result-baseline.png}\hfill
+\includegraphics[width=0.4\columnwidth]{result-groundtruth.png}
+\caption{Preliminary result: baseline reconstruction (left) vs.\ ground truth (right), confirming the data pipeline and baseline already work.}
+\label{fig:prelim}
+\end{figure}
+
 \section{Evaluation Plan}
 
 We will report PSNR and SSIM on held-out training scenes, and conduct a failure analysis against motion speed using visionsim sweeps to characterize when temporal reconstruction breaks down. The contribution is framed as an interpretable classical method with a rigorous failure analysis, rather than a state-of-the-art claim against neural approaches.
 
+\section{Scope and Feasibility}
+
+This project topic was discussed with Prof.\ Gupta, who confirmed it is a reasonable and worthwhile direction. As expected at this stage, scope may be refined as implementation progresses. Prof.\ Gupta also offered to connect the team with his lab for data access or implementation guidance if needed.
+
 \section{Timeline}
 
-\begin{table}[h]
+\begingroup
 \centering
 \small
+\renewcommand{\arraystretch}{0.9}
 \begin{tabular}{@{}p{0.08\columnwidth}p{0.30\columnwidth}p{0.52\columnwidth}@{}}
 \toprule
 \textbf{Wk} & \textbf{Dates} & \textbf{Milestone} \\
@@ -150,12 +164,8 @@ We will report PSNR and SSIM on held-out training scenes, and conduct a failure 
 10 & Dec 1--Dec 10 & Presentation and final webpage \\
 \bottomrule
 \end{tabular}
-\caption{Project timeline by course week.}
+\captionof{table}{Project timeline by course week.}
 \label{tab:timeline}
-\end{table}
-
-\section{Scope and Feasibility}
-
-This project topic was discussed with Prof.\ Gupta, who confirmed it is a reasonable and worthwhile direction. As expected at this stage, scope may be refined as implementation progresses. Prof.\ Gupta also offered to connect the team with his lab for data access or implementation guidance if needed.
+\endgroup
 
 \end{document}
