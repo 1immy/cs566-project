@@ -5,12 +5,12 @@ Four tracks, split along the pipeline's natural seams (see `docs/proposal.tex` F
 
 Fix the interfaces below in Week 1 so everyone can build and unit-test against fixture data without waiting on anyone else's code -- integrate at the end of Weeks 2 and 4 rather than continuously.
 
-| # | Track | Owns | Depends on |
-|---|---|---|---|
-| 1 | **Data & Infra** | Dataset download/chunking, `visionsim` synthetic motion sweeps, the burst-loading API (`load_burst(scene) -> [T,H,W] binary array`), repo/webpage upkeep | Nothing -- unblocks everyone else |
-| 2 | **Alignment backbone** | `align_warp(burst, history) -> warped_frame, motion_field` -- shared by both the baseline and the TAA pipeline; naive-averaging merge | A stub/mock burst from Track 1 (doesn't need the real loader to start) |
-| 3 | **TAA history-rejection** | `reject_and_blend(warped_frame, history, motion_field) -> merged_frame, confidence_map` -- neighborhood clamp, motion-adaptive blend weights (the novel contribution) | A stub warped frame from Track 2 |
-| 4 | **Evaluation & analysis** | `evaluate(reconstruction, ground_truth) -> PSNR, SSIM`, the motion-speed failure-analysis sweep, ablations, results plots/webpage | Stub reconstructions from Tracks 2/3 |
+| # | Track | Owner | Owns | Depends on |
+|---|---|---|---|---|
+| 1 | **Data & Infra** | Limo | Dataset download/chunking, `visionsim` synthetic motion sweeps, the burst-loading API (`load_burst(scene) -> [T,H,W] binary array`), repo/webpage upkeep | Nothing -- unblocks everyone else |
+| 2 | **Alignment backbone** | | `align_warp(burst, history) -> warped_frame, motion_field` -- shared by both the baseline and the TAA pipeline; naive-averaging merge | A stub/mock burst from Track 1 (doesn't need the real loader to start) |
+| 3 | **TAA history-rejection** | | `reject_and_blend(warped_frame, history, motion_field) -> merged_frame, confidence_map` -- neighborhood clamp, motion-adaptive blend weights (the novel contribution) | A stub warped frame from Track 2 |
+| 4 | **Evaluation & analysis** | | `evaluate(reconstruction, ground_truth) -> PSNR, SSIM`, the motion-speed failure-analysis sweep, ablations, results plots/webpage | Stub reconstructions from Tracks 2/3 |
 
 **Fairness notes:**
 - Tracks 2 and 3 are the algorithmically heaviest; Track 3 is the paper's actual novel contribution, so consider pairing up on it rather than one person owning it solo.
@@ -22,6 +22,14 @@ Fix the interfaces below in Week 1 so everyone can build and unit-test against f
 - Track 2 -> Baseline half of Approach + "state of the art" framing
 - Track 3 -> TAA-augmented half of Approach + "why ours should work better"
 - Track 4 -> Evaluation Plan + Timeline
+
+## Data handoff (Track 1)
+The full Single Photon Challenge dataset (~425 GB) and synthetic `visionsim` sweeps live on Limo's personal NAS, not in this repo and not shared over the network to teammates for security reasons. Nobody else needs raw access to work:
+
+- **Starting out:** a small canonical sample set (a handful of short bursts, a few hundred MB total) is committed under `data/samples/`. This matches the shape of `load_burst()`'s real output, so Tracks 2--4 can build and unit-test against it from day one without touching the full dataset.
+- **Mid-sized intermediate results** (motion sweeps, alignment outputs for the mid-term report) get shared via a Google Drive folder under Limo's UW account -- link posted in the group chat -- rather than direct NAS access.
+- **Final full-scale numbers** (final evaluation, ablations) are run by Limo on the NAS against the merged pipeline code from all tracks, with only the output metrics/plots shared back, not the raw data.
+- `data/raw/` and other large/derived data are gitignored (see `.gitignore`); only `data/samples/` is tracked in the repo.
 
 ## Branch structure
 - `main` — protected, stable milestones only (proposal submitted, mid-term submitted, final). No direct pushes; merge via PR only.
