@@ -28,7 +28,8 @@
 \twocolumn[
   \begin{center}
     {\LARGE\bfseries Temporal Anti-Aliasing for Single-Photon Reconstruction}\par\vspace{0.8em}
-    {\large Adrian \quad Limo \quad Jack \quad Ethan}\par\vspace{0.3em}
+    {\large Adrian Gottwein \quad Limo Kemei \quad Jack Chen \quad Ethan Shao}\par\vspace{0.15em}
+    {\small\ttfamily gottwein@wisc.edu \quad kkemei@wisc.edu \quad zchen848@wisc.edu \quad zshao46@wisc.edu}\par\vspace{0.3em}
     {\itshape University of Wisconsin--Madison}\par\vspace{0.6em}
     \small CS 566: Introduction to Computer Vision, Project Proposal \par\vspace{0.2em}
     September 29, 2026
@@ -47,7 +48,7 @@
 
 Single-photon avalanche diode (SPAD) cameras capture high-speed bursts of binary frames, where each pixel records only whether a photon arrived during a given exposure. A single frame carries almost no usable signal; a clean image only emerges from aligning and merging an entire burst, a process known as quanta burst photography. We address \textbf{single-photon image reconstruction under motion}: specifically, whether history-rejection heuristics from real-time temporal anti-aliasing (TAA), namely neighborhood clamping and motion-adaptive blending, improve classical align-and-merge reconstruction, especially under fast motion and disocclusion.
 
-This problem matters for two reasons: SPAD arrays are an emerging sensor technology, with megapixel-scale arrays now available, making robust reconstruction under motion increasingly practical rather than a niche concern; and the standard SPAD pipeline (estimate motion, align, merge) is structurally identical to temporal anti-aliasing in real-time rendering, a connection we have not found explored elsewhere and that offers a genuinely cross-domain, testable hypothesis.
+This problem matters for two reasons: SPAD arrays are an emerging sensor technology, with megapixel-scale arrays now available, making motion-robust reconstruction increasingly practical; and the standard SPAD pipeline (estimate motion, align, merge) is structurally identical to TAA in real-time rendering, a connection we have not found explored elsewhere.
 
 The project builds directly on Prof.\ Gupta's own quanta burst photography research and the Single Photon Challenge benchmark his lab co-organized, giving the team a public dataset with ground truth rather than requiring custom data collection.
 
@@ -59,11 +60,11 @@ The project builds directly on Prof.\ Gupta's own quanta burst photography resea
 
 \textbf{Single Photon Challenge.} This benchmark provides the dataset and existing leaderboard submissions used for comparison in this work.
 
-\textbf{State of the art.} The current state of the art is the quanta burst photography pipeline: align each binary frame to a reference (block matching or optical flow), then merge by averaging. This works well under static or slow motion, but once alignment becomes unreliable, under fast motion, large disocclusion, or low light, misaligned pixels are still blended in at full weight; the pipeline has no mechanism to detect and downweight an untrustworthy alignment, which is precisely the failure mode we target.
+\textbf{State of the art.} The current state of the art is the quanta burst photography pipeline: align each binary frame to a reference (block matching or optical flow), then merge by averaging. This works well under static or slow motion, but once alignment becomes unreliable, under fast motion, disocclusion, or low light, misaligned pixels are still blended in at full weight; the pipeline has no mechanism to detect and downweight an untrustworthy alignment, the failure mode we target.
 
 \section{Approach}
 
-We first re-implement the existing quanta burst photography baseline as a validated point of comparison, then propose a new approach not previously explored to our knowledge: adapting per-pixel history-rejection heuristics from temporal anti-aliasing to explicitly reject unreliable alignments rather than blending them in regardless. Concretely:
+We first re-implement the existing quanta burst photography baseline as a validated comparison point, then propose a new approach not previously explored to our knowledge: adapting per-pixel history-rejection heuristics from TAA to explicitly reject unreliable alignments rather than blending them in regardless. Concretely:
 
 \begin{enumerate}[leftmargin=1.4em,itemsep=2pt,topsep=2pt]
   \item Implement a \textit{baseline}: naive frame averaging, followed by hierarchical block alignment and merging (a simplified quanta burst photography pipeline).

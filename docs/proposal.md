@@ -1,7 +1,12 @@
 # CS 566 Project Proposal
 
-**Team members:** Adrian, Limo, Jack, Ethan
-**Date:** [Sep 29, 2026]
+**Team members:**
+- Adrian Gottwein (gottwein@wisc.edu)
+- Limo Kemei (kkemei@wisc.edu)
+- Jack Chen (zchen848@wisc.edu)
+- Ethan Shao (zshao46@wisc.edu)
+
+**Date:** Sep 29, 2026
 
 ## 1. Problem statement
 Single-photon avalanche diode (SPAD) cameras capture high-speed bursts of binary frames: each pixel only records whether a photon arrived during an exposure, so a single frame carries almost no usable signal. Reconstructing a clean image requires aligning and merging many frames (quanta burst photography). We address **single-photon image reconstruction under motion**: specifically, whether history-rejection heuristics from real-time temporal anti-aliasing (TAA), namely neighborhood clamping and motion-adaptive blending, improve classical align-and-merge reconstruction, especially under fast motion and disocclusion.
