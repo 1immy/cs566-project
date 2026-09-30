@@ -1,6 +1,6 @@
 # CS 566 Final Project — Temporal Anti-Aliasing for Single-Photon Reconstruction
 
-**Team:** Adrian, Limo, Jack, Ethan
+**Team:** Adrian Gottwein (gottwein@wisc.edu), Limo Kemei (kkemei@wisc.edu), Jack Chen (zchen848@wisc.edu), Ethan Shao (zshao46@wisc.edu)
 **Course:** CS 566 Introduction to Computer Vision, Fall 2026 (Prof. Mohit Gupta)
 **Project webpage:** https://1immy.github.io/cs566-project/
 
@@ -19,9 +19,9 @@ Single-photon (SPAD) cameras capture thousands of binary frames per second, wher
 
 ## Webpage images
 The webpage (`webpage/index.html`) has image slots pre-wired under `webpage/assets/`. Add files with these exact names and they'll render automatically:
-- `pipeline-overview.png` — diagram of the reconstruction pipeline (raw frames → alignment → history rejection → merge)
-- `result-baseline.png`, `result-taa.png`, `result-groundtruth.png` — side-by-side reconstruction comparison for one scene
-- `psnr-ssim-chart.png` — PSNR/SSIM vs. motion speed chart
+- `result-baseline.png`, `result-groundtruth.png` — already in place (naive-averaging baseline vs. ground truth for a sample scene)
+- `result-taa.png` — TAA-augmented reconstruction, not yet developed (Weeks 3–4)
+- `psnr-ssim-chart.png` — PSNR/SSIM vs. motion speed chart, not yet developed (Weeks 6–8)
 
 ## Key links
 - Benchmark & dataset: https://singlephotonchallenge.com/
@@ -34,11 +34,13 @@ The webpage (`webpage/index.html`) has image slots pre-wired under `webpage/asse
 cs566-project/
 ├── README.md
 ├── docs/
-│   └── proposal_template.md
+│   ├── proposal.tex          # LaTeX source for the proposal
+│   ├── proposal_latex.pdf    # compiled proposal PDF
+│   └── proposal.md           # markdown version of the proposal
 ├── src/               # implementation code
 ├── data/              # datasets (gitignored if large)
 ├── results/           # output images/videos/plots
-└── webpage/           # served from gh-pages branch
+└── webpage/           # synced onto the gh-pages branch, which GitHub Pages serves
 ```
 
 ## Setup
