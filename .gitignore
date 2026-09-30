@@ -6,7 +6,10 @@ venv/
 .env
 
 # Data & results (track via LFS or external link if large)
-data/raw/
+# Only data/samples/ is tracked -- everything else in data/ lives on the NAS
+# or a shared Google Drive folder (see CONTRIBUTING.md > Data handoff).
+data/*
+!data/samples/
 data/*.zip
 results/*.mp4
 *.pth
