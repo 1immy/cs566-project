@@ -45,7 +45,7 @@ cs566-project/
 
 ## Setup
 ```bash
-git clone <repo-url>
+git clone https://github.com/1immy/cs566-project.git
 cd cs566-project
 pip install -r requirements.txt   # add as dependencies are pinned down
 ```
