@@ -1,10 +1,10 @@
 # CS 566 Project Proposal
 
 **Team members:**
-- Adrian Gottwein (gottwein@wisc.edu)
-- Limo Kemei (kkemei@wisc.edu)
-- Jack Chen (zchen848@wisc.edu)
-- Ethan Shao (zshao46@wisc.edu)
+- Adrian Gottwein — NetID: gottwein
+- Limo Kemei — NetID: kkemei
+- Jack Chen — NetID: zchen848
+- Ethan Shao — NetID: zshao46
 
 **Date:** Sep 29, 2026
 
