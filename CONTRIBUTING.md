@@ -8,11 +8,12 @@ Fix the interfaces below in Week 1 so everyone can build and unit-test against f
 | # | Track | Owner | Owns | Depends on |
 |---|---|---|---|---|
 | 1 | **Data & Infra** | Limo | Dataset download/chunking, `visionsim` synthetic motion sweeps, the burst-loading API (`load_burst(scene) -> [T,H,W] binary array`), repo/webpage upkeep | Nothing -- unblocks everyone else |
-| 2 | **Alignment backbone** | | `align_warp(burst, history) -> warped_frame, motion_field` -- shared by both the baseline and the TAA pipeline; naive-averaging merge | A stub/mock burst from Track 1 (doesn't need the real loader to start) |
-| 3 | **TAA history-rejection** | | `reject_and_blend(warped_frame, history, motion_field) -> merged_frame, confidence_map` -- neighborhood clamp, motion-adaptive blend weights (the novel contribution) | A stub warped frame from Track 2 |
-| 4 | **Evaluation & analysis** | | `evaluate(reconstruction, ground_truth) -> PSNR, SSIM`, the motion-speed failure-analysis sweep, ablations, results plots/webpage | Stub reconstructions from Tracks 2/3 |
+| 2 | **Alignment backbone** | Ethan | `align_warp(burst, history) -> warped_frame, motion_field` -- shared by both the baseline and the TAA pipeline; naive-averaging merge | A stub/mock burst from Track 1 (doesn't need the real loader to start) |
+| 3 | **TAA history-rejection** | Adrian | `reject_and_blend(warped_frame, history, motion_field) -> merged_frame, confidence_map` -- neighborhood clamp, motion-adaptive blend weights (the novel contribution) | A stub warped frame from Track 2 |
+| 4 | **Evaluation & analysis** | Jack | `evaluate(reconstruction, ground_truth) -> PSNR, SSIM`, the motion-speed failure-analysis sweep, ablations, results plots/webpage | Stub reconstructions from Tracks 2/3 |
 
 **Fairness notes:**
+- Jack has offered to also help on Track 3 or 4, whichever needs it more. Track 3 is the likelier fit since it is the novel contribution.
 - Tracks 2 and 3 are the algorithmically heaviest; Track 3 is the paper's actual novel contribution, so consider pairing up on it rather than one person owning it solo.
 - Track 1 front-loads early and frees up by Week 3 -- that person is the natural one to help Track 4 with the Week 6-8 motion-speed sweep.
 - Track 4 is light early, heavy late (Weeks 6-9).

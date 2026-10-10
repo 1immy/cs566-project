@@ -51,6 +51,9 @@ pip install -r requirements.txt   # add as dependencies are pinned down
 ```
 
 ## Team roles
-- [Teammate]: [role — e.g. data pipeline]
-- [Teammate]: [role — e.g. model implementation]
-- [Teammate]: [role — e.g. evaluation / webpage]
+- Limo Kemei: Track 1, Data & Infra (dataset, burst loader, synthetic sweeps, repo/webpage)
+- Ethan Shao: Track 2, Alignment backbone (`align_warp`, naive-averaging merge)
+- Adrian Gottwein: Track 3, TAA history rejection (clamping, adaptive blend, confidence map)
+- Jack Chen: Track 4, Evaluation & analysis (PSNR/SSIM, motion-speed sweep, ablations); also supporting Track 3 or 4
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the interfaces and dependencies between tracks.
