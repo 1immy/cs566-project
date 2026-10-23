@@ -28,6 +28,8 @@ Fix the interfaces below in Week 1 so everyone can build and unit-test against f
 The full Single Photon Challenge dataset (~425 GB) and synthetic `visionsim` sweeps live on Limo's personal NAS, not in this repo and not shared over the network to teammates for security reasons. Nobody else needs raw access to work:
 
 - **Starting out:** a small canonical sample (two 256-frame, 128x128 crops of `kitchen1`, about 1 MB, written by `scripts/make_sample.py`) is committed under `data/samples/`. Load it with `burst_io.load_sample()`. This matches the shape of `load_burst()`'s real output, so Tracks 2--4 can build and unit-test against it from day one without touching the full dataset.
+- **Shared data slice (Google Drive, UW-Madison accounts):** https://drive.google.com/drive/folders/1-Z96hNndg0IBuMcAzk62JWB-reFGmrEO?usp=sharing
+  About 5 GB: 10 train scenes, 2 to 3 whole bursts each (`kitchen1` has bursts 0, 1, 10), same folder layout as the dataset, so `load_burst(scene_dir, index)` works unchanged. Download only the scenes you need (`kitchen1` is about 740 MB). A full cube needs about 2 GB of RAM unpacked, so use `frames=` and `crop=`.
 - **Mid-sized intermediate results** (motion sweeps, alignment outputs for the mid-term report) get shared via a Google Drive folder under Limo's UW account -- link posted in the group chat -- rather than direct NAS access.
 - **Final full-scale numbers** (final evaluation, ablations) are run by Limo on the NAS against the merged pipeline code from all tracks, with only the output metrics/plots shared back, not the raw data.
 - `data/raw/` and other large/derived data are gitignored (see `.gitignore`); only `data/samples/` is tracked in the repo.

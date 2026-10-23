@@ -48,7 +48,8 @@ Each track can build against stubs (identity warp, pass-through blend) so nobody
 - `.png`: 800x800 RGB ground truth for that burst.
 - Mean photon rate about 0.157 per binary pixel. A 256-frame average correlates about 0.89 with ground truth.
 - A full cube unpacks to about 2 GB. Use `frames=` and `crop=` while prototyping. `crop` x bounds must be multiples of 8.
-- Open question: how much scene motion exists inside one 1024-frame burst (this decides whether alignment is within-burst or across consecutive bursts). Do not assume; measure and report.
+- Shared slice for teammates (Google Drive, UW-Madison accounts only): https://drive.google.com/drive/folders/1-Z96hNndg0IBuMcAzk62JWB-reFGmrEO?usp=sharing . About 5 GB, 10 scenes (`kitchen1` bursts 0, 1, 10; `library-homeoffice`, `loft`, `diner`, `staircase`, `restaurant`, `tv-couch`, `bathroom1`, `livingroom`, `simplekitchen` bursts 0, 1), same layout as the dataset.
+- Motion inside a burst is real (about 2 to 20 px of mostly horizontal drift in `kitchen1`); see `docs/findings/burst-motion.md`. Alignment must run within a burst, on groups of frames, not single binary frames.
 - The committed sample is `data/samples/` (two 256-frame 128x128 `kitchen1` crops, about 1 MB), made by `scripts/make_sample.py`.
 
 ## 6. Repo layout and branches
