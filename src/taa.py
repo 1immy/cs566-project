@@ -10,6 +10,9 @@ from numbers import Real
 
 import numpy as np
 
+from .alignment import align_warp
+from .burst_io import naive_average
+
 
 @dataclass(frozen=True)
 class TAAConfig:
@@ -136,3 +139,66 @@ def reject_and_blend(warped_frame, history, motion_field):
     merged, confidence, _, _ = _blend_with_weights(
         warped_frame, history, motion_field, 1.0, 1.0, TAAConfig())
     return merged, confidence
+
+
+@dataclass
+class TAAResult:
+    """Burst result and diagnostics, all on the first group's reference grid.
+
+    confidence_map describes the LAST update only; zero means absent evidence
+    or rejected history. valid_update_mask disambiguates those cases. For a
+    single group both are zero because no temporal comparison was made.
+    frame_counts counts geometrically valid frames BEFORE history rejection,
+    so it matches the baseline's coverage. history_weights are discounted
+    accumulation weights, not statistical effective sample sizes.
+    """
+
+    reconstruction: np.ndarray
+    confidence_map: np.ndarray
+    frame_counts: np.ndarray
+    history_weights: np.ndarray
+    valid_update_mask: np.ndarray
+
+
+def reconstruct_taa(cube, group_size=64, config=None):
+    """Align frame groups to a fixed reference, then update TAA history.
+
+    Uses the unmodified Track 2 aligner and exactly its baseline's first-group
+    reference and group partition. Only the rejection/blending stage differs.
+    The three-argument reject_and_blend and this burst wrapper use the same
+    kernel; explicit per-pixel history weights let the wrapper handle partial
+    groups and missing observations without changing the agreed API.
+
+    A valid group of n frames retains confidence * previous_weight units of
+    history, adds n units of current evidence, and updates the weighted mean.
+    Missing observations change neither history nor its weight. Both effects
+    disabled (TAAConfig(clamp=False, adaptive=False)) recover aligned_average
+    within float32 rounding, including partial groups and invalid borders.
+    """
+    cube = np.asarray(cube)
+    if cube.ndim != 4 or cube.shape[-1] != 3 or min(cube.shape) == 0:
+        raise ValueError("cube must have nonempty shape [T,H,W,3]")
+    if cube.dtype not in (np.dtype("uint8"), np.dtype("bool")) or cube.max() > 1:
+        raise ValueError("cube must be uint8/bool containing only 0 and 1")
+    if (isinstance(group_size, (bool, np.bool_))
+            or not isinstance(group_size, (int, np.integer)) or group_size <= 0):
+        raise ValueError("group_size must be a positive integer")
+    if config is None:
+        config = TAAConfig()
+    if not isinstance(config, TAAConfig):
+        raise ValueError("config must be a TAAConfig")
+
+    first_count = min(group_size, len(cube))
+    reference = naive_average(cube[:first_count])
+    history = reference.copy()
+    counts = np.full(cube.shape[1:3], first_count, dtype=np.float32)
+    weights = counts.copy()
+    confidence = np.zeros(cube.shape[1:3], dtype=np.float32)
+    valid = np.zeros(cube.shape[1:3], dtype=bool)
+    for start in range(group_size, len(cube), group_size):
+        group = cube[start:start + group_size]
+        warped, motion = align_warp(group, reference)
+        history, confidence, weights, valid = _blend_with_weights(
+            warped, history, motion, weights, len(group), config)
+        counts[valid] += len(group)
+    return TAAResult(history, confidence, counts, weights, valid)
