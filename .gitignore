@@ -12,6 +12,8 @@ data/*
 !data/samples/
 data/*.zip
 results/*.mp4
+# Reproducible local Track 3 outputs; keep generated arrays out of commits.
+results/sample_taa/
 *.pth
 *.ckpt
 

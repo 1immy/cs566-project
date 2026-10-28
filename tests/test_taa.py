@@ -164,3 +164,19 @@ class HistoryRejectionTests(unittest.TestCase):
         np.testing.assert_allclose(merged, 0.68)
         np.testing.assert_array_equal(weights, 160)
         np.testing.assert_array_equal(confidence, 1)
+
+    def test_no_clamp_preserves_neighborhood_based_retention(self):
+        self.history[:] = 0.8
+        results = {}
+        for label, clamp, adaptive in (("full", True, True), ("clamp", True, False),
+                                       ("adaptive", False, True)):
+            results[label] = _blend_with_weights(
+                self.current, self.history, self.motion, 1, 1,
+                TAAConfig(clamp=clamp, adaptive=adaptive, rejection_scale=1))
+        self.assertTrue(np.all(results["full"][0] < results["clamp"][0]))
+        self.assertTrue(np.all(results["clamp"][0] <= 0.25))
+        self.assertTrue(np.all(results["adaptive"][0] > 0.25))
+        # Turning off clipping retains neighborhood disagreement in the
+        # adaptive confidence calculation; turning off adaptation sets c=1.
+        np.testing.assert_array_equal(results["full"][1], results["adaptive"][1])
+        np.testing.assert_array_equal(results["clamp"][1], 1)
