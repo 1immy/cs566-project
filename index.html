@@ -13,17 +13,22 @@
 
 <div class="layout">
 
-  <nav class="sidenav">
-    <span class="sidenav-title">TAA &middot; Single-Photon Reconstruction</span>
-    <div class="sidenav-links">
-      <a href="#introduction">Introduction</a>
-      <a href="#approach">Approach</a>
-      <a href="#timeline">Timeline</a>
-      <a href="#midterm">Mid-Term</a>
-      <a href="#results">Results</a>
-      <a href="#code">Code</a>
-    </div>
-  </nav>
+  <nav class="rail" aria-label="Page sections">
+<div class="rail-track"><div class="rail-fill"></div></div>
+<ol class="rail-list">
+<li class="rail-group">Proposal <span>Sep 29</span></li>
+<li><a href="#introduction"><i></i><b>Introduction</b></a></li>
+<li><a href="#approach"><i></i><b>Approach</b></a></li>
+<li><a href="#data"><i></i><b>Data</b></a></li>
+<li><a href="#timeline"><i></i><b>Timeline</b></a></li>
+<li class="rail-group">Updates</li>
+<li><a href="#midterm"><i></i><b>Mid-term</b> <span>Oct 29</span></a></li>
+<li><a href="#results"><i></i><b>Results</b></a></li>
+<li><a href="#discussion"><i></i><b>Discussion</b></a></li>
+<li><a href="#presentation"><i></i><b>Presentation</b></a></li>
+<li><a href="#code"><i></i><b>Code</b></a></li>
+</ol>
+</nav>
 
   <div class="content">
 
@@ -245,5 +250,33 @@
 
 </div>
 
+<script>
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('.rail-list a'));
+  var fill = document.querySelector('.rail-fill');
+  var list = document.querySelector('.rail-list');
+  var items = links.map(function (a) {
+    return { a: a, el: document.querySelector(a.getAttribute('href')) };
+  }).filter(function (x) { return x.el; });
+  function update() {
+    var line = window.innerHeight * 0.35, cur = 0;
+    items.forEach(function (x, i) { if (x.el.getBoundingClientRect().top <= line) cur = i; });
+    items.forEach(function (x, i) {
+      x.a.classList.toggle('active', i === cur);
+      x.a.classList.toggle('passed', i < cur);
+    });
+    if (items.length && list) {
+      var li = items[cur].a.parentNode;
+      fill.style.height = (li.offsetTop + li.offsetHeight / 2) + 'px';
+    }
+    var doc = document.documentElement;
+    var p = doc.scrollTop / Math.max(1, doc.scrollHeight - doc.clientHeight);
+    document.documentElement.style.setProperty('--progress', (p * 100).toFixed(1) + '%');
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+})();
+</script>
 </body>
 </html>
