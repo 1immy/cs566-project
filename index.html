@@ -32,7 +32,7 @@
       <p class="authors">Adrian Gottwein &middot; Limo Kemei &middot; Jack Chen &middot; Ethan Shao</p>
       <p class="author-emails">NetIDs: gottwein &middot; kkemei &middot; zchen848 &middot; zshao46</p>
       <p class="affiliation">University of Wisconsin&ndash;Madison</p>
-      <p class="course-line">CS 566: Introduction to Computer Vision, Course Project<br>Proposal submitted September 29, 2026</p>
+      <p class="course-line">CS 566: Introduction to Computer Vision, Course Project<br>Proposal submitted September 29, 2026 &middot; Mid-term report submitted October 29, 2026</p>
 
       <div class="abstract">
         <h2 class="abstract-label">Abstract</h2>
@@ -150,7 +150,7 @@
 
         <section id="data">
           <h2>Data</h2>
-          <p>The Single Photon Challenge dataset provides 50 simulated training scenes and 5 test scenes (ground truth withheld), each burst (a &ldquo;photon cube&rdquo;) consisting of 1,024 binary frames. The full set is approximately 425&nbsp;GB; we will work with a 5&ndash;10 chunk subset (roughly 8.5&nbsp;GB per chunk), supplemented with our own synthetic motion sweeps generated via the MIT-licensed visionsim simulator.</p>
+          <p>The Single Photon Challenge dataset provides 50 simulated training scenes and 5 test scenes (ground truth withheld), each burst (a &ldquo;photon cube&rdquo;) consisting of 1,024 binary frames. The full set is approximately 425&nbsp;GB; we will work with a 10-scene shared subset (about 5&nbsp;GB; the average scene archive is about 2.7&nbsp;GB, not the 8.5&nbsp;GB stated in the proposal), supplemented with our own synthetic motion sweeps generated via the MIT-licensed visionsim simulator.</p>
         </section>
 
         <section id="evaluation">
@@ -189,35 +189,36 @@
         <p class="updates-label">Project Updates</p>
 
         <section id="midterm">
-          <h2>Mid-Term Report <span class="date">(Oct 29, 2026)</span></h2>
-          <p class="tbd">Not yet developed. This section will be completed following the mid-term milestone (Oct 29, 2026).</p>
-        </section>
-
-        <section id="results">
-          <h2>Results</h2>
-          <div class="gallery">
-            <figure>
-              <img src="assets/result-baseline.png" alt="Reconstruction result from the naive averaging and block alignment baseline">
-              <figcaption>Baseline: naive averaging + block alignment</figcaption>
-            </figure>
-            <figure>
-              <div class="placeholder">Not yet developed</div>
-              <figcaption>Ours: TAA-augmented reconstruction (pipeline implementation not yet developed, Weeks 3&ndash;4)</figcaption>
-            </figure>
-            <figure>
-              <img src="assets/result-groundtruth.png" alt="Ground truth reference image for the scene">
-              <figcaption>Ground truth</figcaption>
-            </figure>
-            <figure>
-              <div class="placeholder">Not yet developed</div>
-              <figcaption>PSNR / SSIM vs. motion speed (evaluation sweep not yet developed, Weeks 6&ndash;8)</figcaption>
-            </figure>
-          </div>
-        </section>
-
-        <section id="discussion">
+<h2>Mid-Term Report <span class="date">(Oct 29, 2026)</span></h2>
+<p>Both pipeline stages now run on real Single Photon Challenge data: a loader with frame and crop selection, naive and block-aligned baselines, and a TAA stage with neighborhood clamping and motion-adaptive blending. Two early findings shape the rest of the project.</p>
+<p><strong>The scene moves inside a single burst.</strong> Phase correlation between 256-frame windows shows a mostly horizontal drift of about 9, 20 and 2&nbsp;px across the three bursts we measured, so alignment has to work on groups of frames rather than single binary frames.</p>
+<p><strong>The ground truth is at the pose of the last frames.</strong> Aligning to the first group is 2.2 to 2.9&nbsp;dB <em>worse</em> than naive averaging, while aligning to the last group is 2.5 to 4.4&nbsp;dB better. Our first TAA configuration is 1.0 to 3.8&nbsp;dB worse than plain alignment, because its displacement-based confidence discards correct frames once the motion has been compensated. We plan to replace it with a residual-based confidence.</p>
+<p class="pdf-link"><a href="midterm-report.pdf">Download the mid-term report (PDF)</a></p>
+</section>
+<section id="results">
+<h2>Results</h2>
+<p>Scene <code>kitchen1</code>, bursts 0, 1 and 10, a 300&times;304 central crop, all 1,024 frames, groups of 64. Each reconstruction is multiplied by one least-squares gain before PSNR, because the ground truth is much brighter than the photon average. This rule is preliminary, and the results come from one scene with no held-out data, so they are indicative, not a benchmark.</p>
+<figure class="diagram">
+<img src="assets/result-compare.png" alt="Five panels for burst 0 of kitchen1: ground truth, naive average, aligned to first group, aligned to last group, and TAA with last-group reference" style="width:100%;border:1px solid var(--border);border-radius:4px;display:block">
+<figcaption><strong>Figure 2.</strong> Burst 0 of <code>kitchen1</code>. Naive averaging blurs the moving scene. Aligning to the first group is sharp but offset from the ground truth. Aligning to the last group matches it, with visible photon noise. Default TAA (also last-group reference) is noisier still.</figcaption>
+</figure>
+<table class="results-table">
+<thead>
+<tr><th>PSNR (dB)</th><th>Burst 0</th><th>Burst 1</th><th>Burst 10</th></tr>
+</thead>
+<tbody>
+<tr><td>Naive average</td><td>16.2</td><td>14.7</td><td>16.8</td></tr>
+<tr><td>Aligned, first-group reference</td><td>14.0</td><td>12.5</td><td>13.9</td></tr>
+<tr><td>Aligned, last-group reference</td><td><strong>19.7</strong></td><td><strong>19.1</strong></td><td><strong>19.3</strong></td></tr>
+<tr><td>Clamp only, last-group reference</td><td>19.7</td><td>18.5</td><td>19.3</td></tr>
+<tr><td>TAA (default), last-group reference</td><td>17.3</td><td>15.3</td><td>18.3</td></tr>
+</tbody>
+</table>
+<p class="tbd">Still to come: SSIM, held-out scenes, and the PSNR / SSIM versus motion speed sweep (planned for Weeks 6&ndash;8).</p>
+</section>
+<section id="discussion">
           <h2>Discussion</h2>
-          <p class="tbd">Not yet developed. This section depends on the failure analysis across motion speed, which has not yet been run.</p>
+          <p>Preliminary reading: when alignment is accurate, displacement-based history rejection hurts rather than helps. The full failure analysis across motion speed has not yet been run, and this section will be completed after it.</p>
         </section>
 
         <section id="presentation">
@@ -235,7 +236,7 @@
     </main>
 
     <footer>
-      <p>CS 566, Fall 2026 &middot; Last updated: September 29, 2026</p>
+      <p>CS 566, Fall 2026 &middot; Last updated: October 29, 2026</p>
     </footer>
 
   </div>
