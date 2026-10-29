@@ -32,7 +32,7 @@ Gain-matched PSNR (dB) on `kitchen1`, bursts 0 / 1 / 10, 300x304 crop, all 1,024
 | TAA end to end | Nov 8 | In progress |
 | Motion sweeps + failure analysis | Nov 19 | Not started |
 | Final evaluation + ablations | Nov 30 | Not started |
-| Final presentation | Dec 8 | Not started |
+| Final presentation (5-minute pre-recorded video) | Dec 8 | Not started |
 | Project webpage | Dec 10 | Updated for mid-term |
 
 Progress is tracked as GitHub issues grouped by these milestones.

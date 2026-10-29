@@ -25,7 +25,7 @@ Jack may also help on Track 3 or 4. Work on the track of the person you are assi
 | 5 | Oct 27 - Oct 29 | **Mid-term report due Oct 29**: baseline vs TAA |
 | 6-8 | Oct 30 - Nov 19 | Motion sweeps (visionsim), failure analysis |
 | 9 | Nov 20 - Nov 30 | Final evaluation, ablations |
-| 10 | Dec 1 - Dec 10 | Presentation and final webpage (freeze Dec 10) |
+| 10 | Dec 1 - Dec 10 | Final presentation and final webpage (freeze Dec 10). The presentation is a 5-minute pre-recorded video, shown in class on Tue Dec 8 (video script by Dec 1, recorded by Dec 4, uploaded and embedded on the webpage by Dec 5, Q&A text on the webpage) |
 
 The team is behind the Weeks 3-4 target, so the mid-term needs a working baseline, a TAA prototype and a comparison on small data, even if rough. When in doubt, prefer something that runs end to end over something polished.
 
