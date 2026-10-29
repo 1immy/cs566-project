@@ -28,7 +28,7 @@ Gain-matched PSNR (dB) on `kitchen1`, bursts 0 / 1 / 10, 300x304 crop, all 1,024
 | Milestone | Due | Status |
 |---|---|---|
 | Proposal | Sep 29 | Submitted |
-| Mid-term report | Oct 29 | Submitted (resubmit when evaluation lands) |
+| Mid-term report | Oct 29 | Submitted |
 | TAA end to end | Nov 8 | In progress |
 | Motion sweeps + failure analysis | Nov 19 | Not started |
 | Final evaluation + ablations | Nov 30 | Not started |
