@@ -1,0 +1,80 @@
+{
+  "method": "hierarchical block alignment + frame-count-weighted average",
+  "reference": "first group mean, fixed",
+  "alignment": {
+    "block_size": 8,
+    "max_pyramid_levels": 3,
+    "coarse_search_radius": 4,
+    "refinement_radius": 2,
+    "motion": "integer backward offsets (dy,dx)",
+    "border_matching": "at least half-block valid overlap",
+    "unmatchable_edge_blocks": "retain coarse prediction",
+    "invalid_warp_pixels": "excluded from sum and counts"
+  },
+  "display": "direct [0,1] mapping; no intensity normalization",
+  "evaluation": "PSNR/SSIM not yet run; development samples only",
+  "randomness": "none",
+  "samples": [
+    {
+      "sample": "data/samples/kitchen1_000000.npz",
+      "ground_truth": "data/samples/kitchen1_000000_gt.png",
+      "sample_sha256": "95966aa28af52e68cf884134dc513a0313b2a51a5e87de34949b0f81039eb3d8",
+      "ground_truth_sha256": "fcef07cdc3306681b0605daf962061cacca3df60e99e471b4af7b0b5e0111344",
+      "shape": [
+        256,
+        128,
+        128,
+        3
+      ],
+      "crop_y0_y1_x0_x1": [
+        336,
+        464,
+        336,
+        464
+      ],
+      "sample_local_frame_indices": [
+        0,
+        255
+      ],
+      "group_size": 64,
+      "contributing_frames_min": 64.0,
+      "contributing_frames_max": 256.0
+    },
+    {
+      "sample": "data/samples/kitchen1_000001.npz",
+      "ground_truth": "data/samples/kitchen1_000001_gt.png",
+      "sample_sha256": "f7ee295c939104e26e0433894b6a49de28ec7b1c94b4e58606b05b057e4e409a",
+      "ground_truth_sha256": "1918b33bdf26151ecdf1144f68e5c989567ec08562c6bfca87a5499e39c3ba3f",
+      "shape": [
+        256,
+        128,
+        128,
+        3
+      ],
+      "crop_y0_y1_x0_x1": [
+        336,
+        464,
+        336,
+        464
+      ],
+      "sample_local_frame_indices": [
+        0,
+        255
+      ],
+      "group_size": 64,
+      "contributing_frames_min": 64.0,
+      "contributing_frames_max": 256.0
+    }
+  ],
+  "versions": {
+    "python": "3.14.7",
+    "numpy": "2.5.3",
+    "pillow": "12.3.0"
+  },
+  "source_sha256": {
+    "src/alignment.py": "241bba359899c499400bc1e812bcd02cb941249f9a6171ea98612494db592b51",
+    "src/baseline.py": "4dd2b36fea4a68c421222ddf5873c208099051a62f16b44bbba109163483a30b",
+    "src/burst_io.py": "ac59eff470303bf495fd1e58d7cdb6a24baa0b8023f21aa2208d9c88df9b5730",
+    "scripts/run_sample_baselines.py": "696dda6fdd2a23c379ab9427ee34eea9b630c8ab7dacad7b10c3320b323ac682"
+  }
+}
