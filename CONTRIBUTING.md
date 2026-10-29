@@ -7,12 +7,13 @@ Fix the interfaces below in Week 1 so everyone can build and unit-test against f
 
 | # | Track | Owner | Owns | Depends on |
 |---|---|---|---|---|
-| 1 | **Data & Infra** | Limo | Dataset download/chunking, `visionsim` synthetic motion sweeps, the burst-loading API (`load_burst(scene) -> [T,H,W] binary array`), repo/webpage upkeep | Nothing -- unblocks everyone else |
-| 2 | **Alignment backbone** | | `align_warp(burst, history) -> warped_frame, motion_field` -- shared by both the baseline and the TAA pipeline; naive-averaging merge | A stub/mock burst from Track 1 (doesn't need the real loader to start) |
-| 3 | **TAA history-rejection** | | `reject_and_blend(warped_frame, history, motion_field) -> merged_frame, confidence_map` -- neighborhood clamp, motion-adaptive blend weights (the novel contribution) | A stub warped frame from Track 2 |
-| 4 | **Evaluation & analysis** | | `evaluate(reconstruction, ground_truth) -> PSNR, SSIM`, the motion-speed failure-analysis sweep, ablations, results plots/webpage | Stub reconstructions from Tracks 2/3 |
+| 1 | **Data & Infra** | Limo | Dataset download/chunking, `visionsim` synthetic motion sweeps, the burst-loading API (`load_burst(scene_dir, index, frames, crop) -> [T,H,W,3] binary array` (see `src/burst_io.py`)), repo/webpage upkeep | Nothing -- unblocks everyone else |
+| 2 | **Alignment backbone** | Ethan | `align_warp(burst, history) -> warped_frame, motion_field` -- shared by both the baseline and the TAA pipeline; naive-averaging merge | A stub/mock burst from Track 1 (doesn't need the real loader to start) |
+| 3 | **TAA history-rejection** | Adrian | `reject_and_blend(warped_frame, history, motion_field) -> merged_frame, confidence_map` -- neighborhood clamp, motion-adaptive blend weights (the novel contribution) | A stub warped frame from Track 2 |
+| 4 | **Evaluation & analysis** | Jack | `evaluate(reconstruction, ground_truth) -> PSNR, SSIM`, the motion-speed failure-analysis sweep, ablations, results plots/webpage | Stub reconstructions from Tracks 2/3 |
 
 **Fairness notes:**
+- Jack has offered to also help on Track 3 or 4, whichever needs it more. Track 3 is the likelier fit since it is the novel contribution.
 - Tracks 2 and 3 are the algorithmically heaviest; Track 3 is the paper's actual novel contribution, so consider pairing up on it rather than one person owning it solo.
 - Track 1 front-loads early and frees up by Week 3 -- that person is the natural one to help Track 4 with the Week 6-8 motion-speed sweep.
 - Track 4 is light early, heavy late (Weeks 6-9).
@@ -26,10 +27,15 @@ Fix the interfaces below in Week 1 so everyone can build and unit-test against f
 ## Data handoff (Track 1)
 The full Single Photon Challenge dataset (~425 GB) and synthetic `visionsim` sweeps live on Limo's personal NAS, not in this repo and not shared over the network to teammates for security reasons. Nobody else needs raw access to work:
 
-- **Starting out:** a small canonical sample set (a handful of short bursts, a few hundred MB total) is committed under `data/samples/`. This matches the shape of `load_burst()`'s real output, so Tracks 2--4 can build and unit-test against it from day one without touching the full dataset.
+- **Starting out:** a small canonical sample (two 256-frame, 128x128 crops of `kitchen1`, about 1 MB, written by `scripts/make_sample.py`) is committed under `data/samples/`. Load it with `burst_io.load_sample()`. This matches the shape of `load_burst()`'s real output, so Tracks 2--4 can build and unit-test against it from day one without touching the full dataset.
+- **Shared data slice (Google Drive, UW-Madison accounts):** https://drive.google.com/drive/folders/1-Z96hNndg0IBuMcAzk62JWB-reFGmrEO?usp=sharing
+  About 5 GB: 10 train scenes, 2 to 3 whole bursts each (`kitchen1` has bursts 0, 1, 10), same folder layout as the dataset, so `load_burst(scene_dir, index)` works unchanged. Download only the scenes you need (`kitchen1` is about 740 MB). A full cube needs about 2 GB of RAM unpacked, so use `frames=` and `crop=`.
 - **Mid-sized intermediate results** (motion sweeps, alignment outputs for the mid-term report) get shared via a Google Drive folder under Limo's UW account -- link posted in the group chat -- rather than direct NAS access.
 - **Final full-scale numbers** (final evaluation, ablations) are run by Limo on the NAS against the merged pipeline code from all tracks, with only the output metrics/plots shared back, not the raw data.
 - `data/raw/` and other large/derived data are gitignored (see `.gitignore`); only `data/samples/` is tracked in the repo.
+
+## Issues and labels
+Work is tracked as GitHub issues, one per deliverable, labeled `track-1-data` through `track-4-eval` and grouped by milestone (the course timeline). Assign yourself, link blockers in the description, and add `blocked` if you are waiting on another track. Use the Task issue template. Reference the issue in commits and PRs (`Closes #12`).
 
 ## Branch structure
 - `main` — protected, stable milestones only (proposal submitted, mid-term submitted, final). No direct pushes; merge via PR only.
