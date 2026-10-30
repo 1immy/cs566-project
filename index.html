@@ -195,10 +195,37 @@
 
         <section id="midterm">
 <h2>Mid-Term Report <span class="date">(Oct 29, 2026)</span></h2>
-<p>Both pipeline stages now run on real Single Photon Challenge data: a loader with frame and crop selection, naive and block-aligned baselines, and a TAA stage with neighborhood clamping and motion-adaptive blending. Two early findings shape the rest of the project.</p>
-<p><strong>The scene moves inside a single burst.</strong> Phase correlation between 256-frame windows shows a mostly horizontal drift of about 9, 20 and 2&nbsp;px across the three bursts we measured, so alignment has to work on groups of frames rather than single binary frames.</p>
-<p><strong>The ground truth is at the pose of the last frames.</strong> Aligning to the first group is 2.2 to 2.9&nbsp;dB <em>worse</em> than naive averaging, while aligning to the last group is 2.5 to 4.4&nbsp;dB better. Our first TAA configuration is 1.0 to 3.8&nbsp;dB worse than plain alignment, because its displacement-based confidence discards correct frames once the motion has been compensated. We plan to replace it with a residual-based confidence.</p>
+<p>Both pipeline stages now run on real Single Photon Challenge data, and an evaluation harness reports PSNR and SSIM. Two early findings shape the rest of the project: the scene moves inside a single burst, and the ground truth is at the pose of the last frames. The numbers are in the Results section below.</p>
 <p class="pdf-link"><a href="midterm-report.pdf">Download the mid-term report (PDF)</a></p>
+
+<h3>Progress</h3>
+<p><strong>Data and infrastructure.</strong> A loader reads the 1,024-frame bit-packed bursts with frame and crop selection, so a 2&nbsp;GB cube never has to be unpacked in full. A 1&nbsp;MB sample is committed to the repository and a 10-scene slice (about 5&nbsp;GB) is shared with the team. The full set stays on a private NAS for the final runs.</p>
+<p><strong>Alignment.</strong> Coarse-to-fine 8&times;8 block matching on a three-level pyramid, applied to group means (64 frames per group). Every method shares this aligner, so differences between methods come from the merge stage.</p>
+<p><strong>History validation (TAA).</strong> The warped history is clamped to the 3&times;3 neighborhood range of the incoming group and merged as a weighted mean, discounted by a confidence that falls with neighborhood disagreement and with displacement. Switching both components off recovers the aligned baseline.</p>
+<p><strong>Evaluation.</strong> <code>evaluate(reconstruction, ground_truth)</code> returns mean per-channel PSNR and SSIM. A harness runs naive, aligned and TAA pipelines (and plug-in pipelines) on a list of bursts and writes a results table and comparison figures. The full test suite of 48 tests passes.</p>
+
+<h3>Findings</h3>
+<p><strong>The scene moves inside a single burst.</strong> Phase correlation between 256-frame windows shows a mostly horizontal drift of about 9, 20 and 2&nbsp;px across the three bursts we measured, so alignment has to work on groups of frames rather than single binary frames.</p>
+<p><strong>The ground truth is at the pose of the last frames.</strong> Aligning to the first group is 2.2 to 2.9&nbsp;dB <em>worse</em> than naive averaging, while aligning to the last group is 2.5 to 4.4&nbsp;dB better. Our first TAA configuration is 1.0 to 3.8&nbsp;dB worse than plain alignment, because its displacement-based confidence discards correct frames once the motion has been compensated.</p>
+
+<h3>Difficulties</h3>
+<ul>
+<li><strong>Reference frame.</strong> A fixed first-group reference, the natural default, makes alignment look harmful. We found this only after comparing against the ground truth at several time offsets.</li>
+<li><strong>Intensity mismatch.</strong> The ground truth is much brighter than the photon average. We currently use two rules, a per-image gain for the main table and a fixed gain of 2.7 in the harness, and one rule has to be chosen and applied everywhere.</li>
+<li><strong>Noise versus motion.</strong> Single binary frames cannot be aligned, and photon noise in flat regions produces apparent motion, which makes displacement an unreliable proxy for alignment error.</li>
+<li><strong>TAA tuning.</strong> Once alignment has compensated for the motion, the displacement term in our confidence discards correct frames and raises noise.</li>
+</ul>
+
+<h3>Changes to the proposal</h3>
+<ul>
+<li><strong>Alignment unit.</strong> Alignment runs within a burst, on groups of frames, with the last group as reference.</li>
+<li><strong>Motion sweeps.</strong> Real bursts already span roughly 2 to 20&nbsp;px of motion, so the visionsim sweeps become optional and the motion study uses real bursts binned by measured speed.</li>
+<li><strong>Data size.</strong> The average archive is about 2.7&nbsp;GB (133&nbsp;GB compressed in total), not 8.5&nbsp;GB as proposed.</li>
+<li><strong>Hypothesis.</strong> The initial TAA result is negative: when alignment is accurate, displacement-based rejection hurts. We now plan a confidence based on alignment residual and will report the failure analysis either way.</li>
+</ul>
+
+<h3>Next steps</h3>
+<p>Unify the intensity rule, switch the baselines and TAA to the last-group reference, and rerun the harness on full bursts and a motion-binned scene set. Replace the displacement term with a residual-based confidence, run ablations (clamp, blend, confidence) and a failure analysis against motion speed. Experiments freeze on Nov&nbsp;30.</p>
 </section>
 <section id="results">
 <h2>Results</h2>
@@ -219,7 +246,18 @@
 <tr><td>TAA (default), last-group reference</td><td>17.3</td><td>15.3</td><td>18.3</td></tr>
 </tbody>
 </table>
-<p class="tbd">Still to come: SSIM, held-out scenes, and the PSNR / SSIM versus motion speed sweep (planned for Weeks 6&ndash;8).</p>
+<p>The evaluation harness gives SSIM as well. On the two committed samples (256 frames, 128&times;128 crop, fixed gain 2.7, first-group reference), aligned averaging and TAA do not beat naive averaging, which agrees with the first-group result above. These numbers are <em>not</em> comparable with the table above, because the crop, number of frames, reference group and intensity rule all differ.</p>
+<table class="results-table">
+<thead>
+<tr><th>Harness (dB / SSIM)</th><th>B0 PSNR</th><th>B0 SSIM</th><th>B1 PSNR</th><th>B1 SSIM</th></tr>
+</thead>
+<tbody>
+<tr><td>Naive average</td><td>11.93</td><td>0.159</td><td>9.78</td><td>0.140</td></tr>
+<tr><td>Aligned (first ref.)</td><td>11.86</td><td>0.150</td><td>9.52</td><td>0.134</td></tr>
+<tr><td>TAA (first ref.)</td><td>11.86</td><td>0.148</td><td>9.52</td><td>0.128</td></tr>
+</tbody>
+</table>
+<p class="tbd">Still to come: held-out scenes and the PSNR / SSIM versus motion speed sweep (planned for Weeks 6&ndash;8).</p>
 </section>
 <section id="discussion">
           <h2>Discussion</h2>
