@@ -1,6 +1,6 @@
 # CS 566 Final Project — Temporal Anti-Aliasing for Single-Photon Reconstruction
 
-**Team:** Adrian Gottwein (gottwein@wisc.edu), Limo Kemei (kkemei@wisc.edu), Jack Chen (zchen848@wisc.edu), Ethan Shao (zshao46@wisc.edu)
+**Team:** Adrian Gottwein (gottwein@wisc.edu), Limo Kemei (kkemei@wisc.edu), Jack Chen (zchen843@wisc.edu), Ethan Shao (zshao46@wisc.edu)
 **Course:** CS 566 Introduction to Computer Vision, Fall 2026 (Prof. Mohit Gupta)
 **Project webpage:** https://1immy.github.io/cs566-project/
 
