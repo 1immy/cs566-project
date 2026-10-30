@@ -1,0 +1,13 @@
+{
+  "intensity_rule": "clip(gain * reconstruction, 0, 1)",
+  "gain": 2.7,
+  "gain_scope": "same fixed value for ALL scenes and methods",
+  "metric_protocol": "per-RGB-channel PSNR/SSIM, arithmetic channel means; SSIM 7x7 uniform reflect padded",
+  "method_reference": "existing first-group reference for aligned and TAA (not end-of-burst report reference)",
+  "evaluation_data": "provided archives; check metadata for source/reference",
+  "inputs": [
+    "results\\sample_taa\\kitchen1_000000_reconstructions.npz",
+    "results\\sample_taa\\kitchen1_000001_reconstructions.npz"
+  ],
+  "rows": 6
+}
