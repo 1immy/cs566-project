@@ -1,9 +1,7 @@
 """Track 4 mid-term harness; run from the repo root.
-
 Examples:
   py scripts/run_evaluation.py --samples data/samples/kitchen1_000000.npz data/samples/kitchen1_000001.npz --gain 2.7
   py scripts/run_evaluation.py --archives results/sample_taa/kitchen1_000000_reconstructions.npz --gain 2.7
-
 Use one FIXED gain for every reconstruction. This is a provisional exposure
 convention, not a calibrated camera response; do not mix with method-wise fitted
 gains. The source arrays and the ground truth are not altered.
@@ -14,7 +12,6 @@ import importlib
 import json
 from pathlib import Path
 import sys
-
 import numpy as np
 from PIL import Image, ImageDraw
 
@@ -23,16 +20,15 @@ sys.path.insert(0, str(ROOT))
 from src.burst_io import load_sample, naive_average
 from src.baseline import aligned_average
 from src.taa import TAAConfig, reconstruct_taa
-from src.evaluation import evaluate_channels
+from src.evaluation import (DEFAULT_EVALUATION_GAIN, apply_intensity_rule,
+                            evaluate_channels)
 
 
 def _map_intensity(image, gain):
-    return np.clip(np.asarray(image, dtype=np.float32) * gain, 0, 1)
-
+    return apply_intensity_rule(image, gain)
 
 def _rgb_png(image):
     return Image.fromarray(np.rint(np.clip(image, 0, 1)*255).astype(np.uint8), 'RGB')
-
 
 def _figure(images, output):
     width, height = images[0][1].shape[1], images[0][1].shape[0]
@@ -47,7 +43,6 @@ def _figure(images, output):
         canvas.paste(_rgb_png(array).resize((width*scale, height*scale)), (x, gap+label_h))
     canvas.save(output)
 
-
 def _custom_pipeline(spec, cube, group_size):
     module_name, func_name = spec.split(':', 1)
     function = getattr(importlib.import_module(module_name), func_name)
@@ -57,7 +52,6 @@ def _custom_pipeline(spec, cube, group_size):
     if isinstance(result, tuple):
         return result[0]
     return result
-
 
 def _sample_images(path, group_size, extras):
     cube = load_sample(path)
@@ -71,7 +65,6 @@ def _sample_images(path, group_size, extras):
         methods[spec.replace(':', '_')] = _custom_pipeline(spec, cube, group_size)
     return gt, methods
 
-
 def _archive_images(path):
     with np.load(path) as archive:
         gt = archive['ground_truth'].copy()
@@ -80,14 +73,13 @@ def _archive_images(path):
         raise ValueError(f'{path} must contain naive, aligned, and taa arrays')
     return gt, methods
 
-
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument('--samples', nargs='+', type=Path)
     source.add_argument('--archives', nargs='+', type=Path)
     parser.add_argument('--group-size', type=int, default=64)
-    parser.add_argument('--gain', type=float, default=2.7,
+    parser.add_argument('--gain', type=float, default=DEFAULT_EVALUATION_GAIN,
                         help='fixed shared reconstruction gain; provisional default 2.7')
     parser.add_argument('--pipeline', action='append', default=[], metavar='MODULE:FUNCTION',
                         help='additional compatible cube pipeline, sample mode only')
@@ -130,7 +122,9 @@ def main(argv=None):
         writer.writeheader()
         writer.writerows(rows)
     info = {'intensity_rule': 'clip(gain * reconstruction, 0, 1)',
+            'intensity_policy': 'fixed gain chosen before scoring; never fitted to each method, scene, or ground truth',
             'gain': args.gain, 'gain_scope': 'same fixed value for ALL scenes and methods',
+            'ground_truth_mapping': 'none; PNG divided by 255',
             'metric_protocol': 'per-RGB-channel PSNR/SSIM, arithmetic channel means; SSIM 7x7 uniform reflect padded',
             'method_reference': 'existing first-group reference for aligned and TAA (not end-of-burst report reference)',
             'evaluation_data': 'committed development samples, not held-out evaluation' if args.samples else 'provided archives; check metadata for source/reference',
@@ -138,7 +132,6 @@ def main(argv=None):
     (args.out/'protocol.json').write_text(json.dumps(info, indent=2)+'\n', encoding='utf-8')
     print(f'Wrote {len(rows)} method results, figures and protocol to {args.out}')
     return rows
-
 
 if __name__ == '__main__':
     main()

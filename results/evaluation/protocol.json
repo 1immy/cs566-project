@@ -1,7 +1,9 @@
 {
   "intensity_rule": "clip(gain * reconstruction, 0, 1)",
+  "intensity_policy": "fixed gain chosen before scoring; never fitted to each method, scene, or ground truth",
   "gain": 2.7,
   "gain_scope": "same fixed value for ALL scenes and methods",
+  "ground_truth_mapping": "none; PNG divided by 255",
   "metric_protocol": "per-RGB-channel PSNR/SSIM, arithmetic channel means; SSIM 7x7 uniform reflect padded",
   "method_reference": "existing first-group reference for aligned and TAA (not end-of-burst report reference)",
   "evaluation_data": "committed development samples, not held-out evaluation",
