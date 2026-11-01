@@ -7,6 +7,31 @@ reflect padding, population moments, and C1=(0.01)^2, C2=(0.03)^2.
 import numpy as np
 
 
+# Fixed for Track 4 comparisons: never fit gain to each method or scene.
+DEFAULT_EVALUATION_GAIN = 2.7
+
+
+def apply_intensity_rule(reconstruction, gain=DEFAULT_EVALUATION_GAIN):
+    """Map photon-domain RGB into [0,1] with one shared fixed gain.
+    Apply to each method separately using the *same* gain. Ground truth is
+    already in [0,1] and must not be gain-adjusted. Inputs are not modified.
+    """
+    if isinstance(gain, (bool, np.bool_)) or not np.isscalar(gain):
+        raise ValueError("gain must be a finite positive scalar")
+    try:
+        gain = float(gain)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError("gain must be a finite positive scalar") from error
+    if not np.isfinite(gain) or gain <= 0:
+        raise ValueError("gain must be a finite positive scalar")
+    image = np.asarray(reconstruction)
+    if (image.ndim != 3 or image.shape[-1] != 3 or not all(image.shape[:2])
+            or image.dtype.kind not in "buif" or not np.isfinite(image).all()
+            or np.any(image < 0) or np.any(image > 1)):
+        raise ValueError("reconstruction must be finite RGB [H,W,3] in [0,1]")
+    return np.clip(image.astype(np.float64) * gain, 0, 1).astype(np.float32)
+
+
 def _local_mean(image, window=7):
     radius = window // 2
     padded = np.pad(image, ((radius, radius), (radius, radius)), mode="reflect")
