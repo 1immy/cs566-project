@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 
 from scripts.run_sample_baselines import main
+from src.baseline import aligned_average
 
 
 class SampleRunnerTests(unittest.TestCase):
@@ -32,14 +33,50 @@ class SampleRunnerTests(unittest.TestCase):
                 np.testing.assert_array_equal(result["naive"], result["aligned"])
                 np.testing.assert_array_equal(result["frame_counts"], len(cube))
                 self.assertEqual(result["aligned"].dtype, np.float32)
+                self.assertEqual(result["reference"].item(), "last")
+                np.testing.assert_array_equal(result["reference_frame_indices"], [0, 2])
             manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["samples"][0]["sample_local_frame_indices"], [0, 2])
+            self.assertEqual(manifest["reference_selection"], "last")
+            self.assertEqual(manifest["samples"][0]["reference_sample_local_frame_indices"], [0, 2])
             self.assertEqual(len(manifest["samples"][0]["sample_sha256"]), 64)
             self.assertEqual(len(manifest["source_sha256"]), 4)
             self.assertNotIn(str(directory), json.dumps(manifest))
             for suffix in ("naive", "aligned", "gt"):
                 with Image.open(out / f"sample_{suffix}.png") as image:
                     self.assertEqual(image.size, (8, 8))
+
+    def test_reference_option_and_partial_group_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            path, cube = self._make_sample(directory / "inputs")
+            for reference, indices in (("first", [0, 1]), ("last", [2, 2])):
+                with self.subTest(reference=reference):
+                    out = directory / reference
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        main(["--samples", str(path), "--out", str(out),
+                              "--group-size", "2", "--reference", reference])
+                    expected, counts = aligned_average(cube, 2, reference=reference)
+                    with np.load(out / "sample_reconstructions.npz") as result:
+                        np.testing.assert_array_equal(result["aligned"], expected)
+                        np.testing.assert_array_equal(result["frame_counts"], counts)
+                        np.testing.assert_array_equal(result["reference_frame_indices"], indices)
+                        self.assertEqual(result["reference"].item(), reference)
+                    manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+                    self.assertEqual(manifest["reference"], f"{reference} group mean, fixed")
+                    record = manifest["samples"][0]
+                    self.assertEqual(record["group_frame_counts"], [2, 1])
+                    self.assertEqual(record["reference"], reference)
+                    self.assertEqual(record["reference_sample_local_frame_indices"], indices)
+
+    def test_invalid_reference_rejected_before_writing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            path, _ = self._make_sample(directory / "inputs")
+            out = directory / "outputs"
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                main(["--samples", str(path), "--out", str(out), "--reference", "middle"])
+            self.assertFalse(out.exists())
 
     def test_duplicate_stems_rejected_before_writing(self):
         with tempfile.TemporaryDirectory() as temporary:

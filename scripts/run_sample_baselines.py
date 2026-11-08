@@ -1,6 +1,6 @@
 """Reproduce Track 2 sample outputs from the repo root.
 
-    py scripts/run_sample_baselines.py --group-size 64
+    py scripts/run_sample_baselines.py --group-size 64 --reference last
 
 PNG images use the same direct [0,1] to [0,255] mapping without exposure
 normalization. Float reconstructions are preserved for Track 4 evaluation.
@@ -42,6 +42,8 @@ def _record_path(path):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--group-size", type=int, default=64)
+    parser.add_argument("--reference", choices=("first", "last"), default="last",
+                        help="fixed alignment reference group (default: last)")
     parser.add_argument("--samples", type=Path, nargs="+", default=[
         Path("data/samples/kitchen1_000000.npz"),
         Path("data/samples/kitchen1_000001.npz")])
@@ -75,13 +77,17 @@ def main(argv=None):
         if gt.shape != cube.shape[1:]:
             raise ValueError(f"Ground truth shape mismatch for {path}")
         naive = naive_average(cube)
-        aligned, counts = aligned_average(cube, args.group_size)
+        aligned, counts = aligned_average(cube, args.group_size, reference=args.reference)
+        reference_start = (0 if args.reference == "first"
+                           else ((len(cube) - 1) // args.group_size) * args.group_size)
+        reference_stop = min(reference_start + args.group_size, len(cube))
         for name, array in (("naive", naive), ("aligned", aligned), ("gt", gt)):
             Image.fromarray(np.rint(np.clip(array, 0, 1) * 255).astype(np.uint8)).save(
                 args.out / f"{path.stem}_{name}.png")
         np.savez_compressed(args.out / f"{path.stem}_reconstructions.npz",
                             naive=naive, aligned=aligned, ground_truth=gt,
-                            frame_counts=counts)
+                            frame_counts=counts, reference=np.array(args.reference),
+                            reference_frame_indices=np.array([reference_start, reference_stop - 1]))
         with np.load(path) as sample:
             crop = sample["crop"].tolist() if "crop" in sample else None
         record = {"sample": _record_path(path), "ground_truth": _record_path(gt_path),
@@ -89,16 +95,25 @@ def main(argv=None):
                   "shape": list(cube.shape), "crop_y0_y1_x0_x1": crop,
                   "sample_local_frame_indices": [0, len(cube) - 1],
                   "group_size": args.group_size,
+                  "group_frame_counts": [min(args.group_size, len(cube) - start)
+                                         for start in range(0, len(cube), args.group_size)],
+                  "reference": args.reference,
+                  "reference_sample_local_frame_indices": [reference_start, reference_stop - 1],
                   "contributing_frames_min": float(counts.min()),
                   "contributing_frames_max": float(counts.max())}
         records.append(record)
-        print(f"{path.stem}: {len(cube)} frames, valid contributions "
+        print(f"{path.stem}: {len(cube)} frames, {args.reference} reference "
+              f"[{reference_start}:{reference_stop}], valid contributions "
               f"{counts.min():.0f}-{counts.max():.0f}; saved to {args.out}")
     manifest = {"method": "hierarchical block alignment + frame-count-weighted average",
-                "reference": "first group mean, fixed",
+                "reference": f"{args.reference} group mean, fixed",
+                "reference_selection": args.reference,
                 "alignment": {"block_size": 8, "max_pyramid_levels": 3,
                               "coarse_search_radius": 4, "refinement_radius": 2,
-                              "motion": "integer backward offsets (dy,dx)",
+                              "motion": "fractional backward offsets (dy,dx)",
+                              "subpixel_steps": [0.5, 0.25, 0.125],
+                              "interpolation": "bilinear",
+                              "small_motion_fallback": "finest level +/-2 if predicted overlap >= half block",
                               "border_matching": "at least half-block valid overlap",
                               "unmatchable_edge_blocks": "retain coarse prediction",
                               "invalid_warp_pixels": "excluded from sum and counts"},

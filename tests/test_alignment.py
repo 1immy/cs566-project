@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from src.alignment import align_warp
+from src.alignment import _warp, align_warp, align_warp_with_confidence
 from src.burst_io import load_sample
 
 
@@ -70,7 +70,9 @@ class AlignmentTests(unittest.TestCase):
         warped, motion = align_warp(second, reference)
         interior = np.s_[24:-24, 24:-24]
         # Photon samples differ between groups; matching need not be exact.
-        np.testing.assert_array_equal(np.median(motion[interior], axis=(0, 1)), shift)
+        # Independently sampled noise can move the continuous SSD minimum
+        # slightly away from the known integer displacement.
+        np.testing.assert_allclose(np.median(motion[interior], axis=(0, 1)), shift, atol=0.25)
         unaligned = second.mean(axis=0, dtype=np.float32)
         aligned_error = np.mean((warped[interior] - probability[interior]) ** 2)
         unaligned_error = np.mean((unaligned[interior] - probability[interior]) ** 2)
@@ -100,6 +102,98 @@ class AlignmentTests(unittest.TestCase):
             values = warped[np.isfinite(warped)]
             self.assertGreater(values.size, 0)
             self.assertTrue(np.all((values >= 0) & (values <= 1)))
+
+    def test_fractional_shifts(self):
+        y, x = np.indices((96, 96), dtype=np.float32)
+
+        def probability(y, x):
+            return np.stack([
+                0.4 + 0.12 * np.sin(0.29 * x + 0.07 * y + channel * 0.4)
+                + 0.1 * np.cos(0.23 * y - 0.13 * x + channel)
+                + 0.08 * np.sin(0.17 * x - 0.19 * y + 0.3 * channel)
+                for channel in range(3)], axis=2)
+
+        reference = probability(y, x)
+        interior = np.s_[24:-24, 24:-24]
+        for dy, dx in ((0.375, -0.25), (-0.375, 0.25), (0.5, 0.5), (-0.5, -0.5)):
+            with self.subTest(shift=(dy, dx)):
+                # Deterministic binary counts isolate interpolation geometry;
+                # separate tests cover independent photon sampling noise.
+                counts = np.rint(256 * probability(y - dy, x - dx)).astype(int)
+                burst = (np.arange(256)[:, None, None, None] < counts).astype(np.uint8)
+                warped, motion = align_warp(burst, reference)
+                np.testing.assert_allclose(np.median(motion[interior], axis=(0, 1)),
+                                           (dy, dx), atol=0.125)
+                self.assertTrue(np.any(motion[interior] != np.rint(motion[interior])))
+                yy, xx = np.indices(reference.shape[:2])
+                integer = np.rint(motion).astype(int)
+                source = burst.mean(axis=0, dtype=np.float32)
+                nearest = source[(yy + integer[..., 0])[interior],
+                                 (xx + integer[..., 1])[interior]]
+                error = np.mean((warped[interior] - reference[interior]) ** 2)
+                integer_error = np.mean((nearest - reference[interior]) ** 2)
+                self.assertLess(error, integer_error)
+
+    def test_bilinear_sampling_and_borders(self):
+        source = np.arange(36, dtype=np.float32).reshape(3, 4, 3) / 35
+        field = np.empty((3, 4, 2), dtype=np.float32)
+        field[:] = (0.25, 0.5)
+        warped, valid = _warp(source, field)
+        expected = ((0.75 * 0.5) * source[0, 0] + (0.75 * 0.5) * source[0, 1]
+                    + (0.25 * 0.5) * source[1, 0] + (0.25 * 0.5) * source[1, 1])
+        np.testing.assert_allclose(warped[0, 0], expected)
+        self.assertFalse(valid[-1].any())
+        self.assertFalse(valid[:, -1].any())
+        self.assertTrue(np.isnan(warped[~valid]).all())
+        field[:] = (-0.25, -0.5)
+        warped, valid = _warp(source, field)
+        expected = (0.125 * source[1, 2] + 0.125 * source[1, 3]
+                    + 0.375 * source[2, 2] + 0.375 * source[2, 3])
+        np.testing.assert_allclose(warped[-1, -1], expected)
+        self.assertFalse(valid[0].any())
+        self.assertFalse(valid[:, 0].any())
+        self.assertTrue(np.isnan(warped[~valid]).all())
+        exact, valid = _warp(source, np.zeros_like(field))
+        self.assertTrue(valid.all())
+        np.testing.assert_array_equal(exact, source)
+
+    def test_optional_confidence_preserves_outputs(self):
+        cube = load_sample("data/samples/kitchen1_000000.npz")
+        reference = cube[:64].mean(axis=0, dtype=np.float32)
+        cube.setflags(write=False)
+        reference.setflags(write=False)
+        warped, motion = align_warp(cube[64:128], reference)
+        detailed, detailed_motion, confidence = align_warp_with_confidence(cube[64:128], reference)
+        np.testing.assert_array_equal(warped, detailed)
+        np.testing.assert_array_equal(motion, detailed_motion)
+        self.assertEqual(confidence.shape, reference.shape[:2])
+        self.assertEqual(confidence.dtype, np.float32)
+        self.assertTrue(np.isfinite(confidence).all())
+        self.assertTrue(((confidence >= 0) & (confidence <= 1)).all())
+        valid = np.isfinite(warped).all(axis=2)
+        np.testing.assert_array_equal(confidence[~valid], 0)
+        for y in range(0, len(confidence), 8):
+            for x in range(0, confidence.shape[1], 8):
+                scores = confidence[y:y + 8, x:x + 8][valid[y:y + 8, x:x + 8]]
+                self.assertLessEqual(len(np.unique(scores)), 1)
+
+    def test_confidence_on_unique_flat_and_repetitive_matches(self):
+        rng = np.random.default_rng(566)
+        reference = rng.integers(0, 2, (96, 96, 3), dtype=np.uint8)
+        source = np.roll(reference, (0, 8), axis=(0, 1))
+        _, _, unique = align_warp_with_confidence(source[None], reference)
+        _, _, stationary = align_warp_with_confidence(reference[None], reference)
+        interior = np.s_[24:-24, 24:-24]
+        self.assertGreater(float(unique[interior].mean()), 0.9)
+        np.testing.assert_allclose(unique[interior], stationary[interior], atol=1e-6)
+        np.testing.assert_array_equal(unique[:, -8:], 0)
+        flat = np.zeros_like(reference)
+        _, _, flat_confidence = align_warp_with_confidence(flat[None], flat)
+        np.testing.assert_array_equal(flat_confidence, 0)
+        y, x = np.indices(reference.shape[:2])
+        periodic = np.repeat(((x + y) % 2)[..., None], 3, axis=2).astype(np.uint8)
+        _, _, periodic_confidence = align_warp_with_confidence(periodic[None], periodic)
+        np.testing.assert_array_equal(periodic_confidence[interior], 0)
 
 
 if __name__ == "__main__":

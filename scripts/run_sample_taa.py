@@ -108,7 +108,7 @@ def main(argv=None):
         if gt.shape != cube.shape[1:]:
             raise ValueError(f"Ground truth shape mismatch for {path.name}")
         naive = naive_average(cube)
-        aligned, counts = aligned_average(cube, args.group_size)
+        aligned, counts = aligned_average(cube, args.group_size, reference="first")
         result = reconstruct_taa(cube, args.group_size, config)
         control = reconstruct_taa(cube, args.group_size, TAAConfig(clamp=False, adaptive=False))
         difference = float(np.max(np.abs(control.reconstruction - aligned)))
