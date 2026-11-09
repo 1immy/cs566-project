@@ -54,7 +54,7 @@ def reconstruct_methods(cube, group_size, shifts, configs, real_alignment=False)
     warps = [(align_warp(group, reference) if real_alignment else oracle_warp(group, shift))
              for group, shift in zip(groups[1:], shifts[1:])]
     with patch("src.baseline.align_warp", side_effect=warps):
-        baseline, counts = aligned_average(cube, group_size)
+        baseline, counts = aligned_average(cube, group_size, reference="first")
     images = {"naive": naive_average(cube), "aligned": baseline}
     for name, config in configs.items():
         with patch("src.taa.align_warp", side_effect=warps) as align:

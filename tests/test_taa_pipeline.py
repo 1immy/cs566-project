@@ -130,7 +130,7 @@ class TAAPipelineTests(unittest.TestCase):
             with self.subTest(sample=index):
                 cube = load_sample(f"data/samples/kitchen1_{index:06d}.npz")
                 # 96 ensures a short final group as well as real invalid edges.
-                baseline, counts = aligned_average(cube, 96)
+                baseline, counts = aligned_average(cube, 96, reference="first")
                 result = reconstruct_taa(cube, 96, TAAConfig(clamp=False, adaptive=False))
                 np.testing.assert_allclose(result.reconstruction, baseline, atol=1e-7, rtol=0)
                 np.testing.assert_array_equal(result.frame_counts, counts)

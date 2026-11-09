@@ -65,7 +65,7 @@ def _sample_images(path, group_size, extras):
     with Image.open(gt_path) as image:
         gt = np.asarray(image.convert('RGB'), dtype=np.float32) / 255
     methods = {'naive': naive_average(cube),
-               'aligned': aligned_average(cube, group_size)[0],
+               'aligned': aligned_average(cube, group_size, reference="first")[0],
                'taa': reconstruct_taa(cube, group_size, TAAConfig()).reconstruction}
     for spec in extras:
         methods[spec.replace(':', '_')] = _custom_pipeline(spec, cube, group_size)
