@@ -128,8 +128,11 @@ reference modes are operational checks, not a fair baseline-versus-TAA
 quality comparison. The manifests record the installed dependency versions;
 this run does not claim reproduction of the pinned environment.
 
-No held-out PSNR/SSIM or full-burst end-pose validation has been run for the
-updated aligner. Historical report metrics and the #19 pre-subpixel outputs
+Subsequent full-burst development validation on `library-homeoffice` bursts
+0 and 1 is recorded in [alignment-baseline.md](alignment-baseline.md), including
+the first-versus-last pose diagnostic and PSNR/SSIM under the shared fixed
+gain. This satisfies the additional-scene check for #19 on the updated aligner.
+No held-out benchmark or subpixel-versus-integer real-scene quality study
+has been completed. Historical report metrics and the #19 pre-subpixel outputs
 describe the earlier integer method. Recompute all methods together before
-reporting quantitative comparisons with this version. Another real scene
-and full-burst validation remain unavailable locally.
+reporting quantitative comparisons with this version.

@@ -108,22 +108,58 @@ burst. The last available group is therefore not the last group of the full
 burst. These runs verify execution and reference bookkeeping, not agreement
 with the full burst's ground-truth pose or improved reconstruction quality.
 
-The issue also requires confirmation on at least one more real scene. That
-check is **not yet run**: only `kitchen1` is available locally. After obtaining
-a different scene from the shared Drive slice, create a local, untracked
-sample covering the full burst and run both reference modes with identical
-frame and crop selections. For example, if the shared scene is downloaded
-under `data/raw/library-homeoffice`:
+### Additional-scene verification completed
+
+On November 8, 2026, the downloaded Drive slice was used to check
+`library-homeoffice`, bursts 0 and 1. Both source files were verified as
+uint8 `(1024,800,100,3)` packed arrays with matching ground-truth PNGs.
+The same predetermined central crop `(272,528,272,528)`, all 1,024 frames,
+64-frame groups, and updated subpixel aligner were used for both references.
+The first reference contains frames 0 through 63; the last contains 960
+through 1023. Both bursts were checked without selecting the better burst
+or changing crop or settings in response to the scores.
+
+The reproducible verification script reads the downloaded scene directly
+and crops before unpacking; no raw data is copied into the repository:
 
 ```powershell
-py scripts/make_sample.py --scene data/raw/library-homeoffice --indices 0 --frames 1024 --size 128 --out data/local_samples
-py scripts/run_sample_baselines.py --samples data/local_samples/library-homeoffice_000000.npz --reference first --out results/issue19/library-first
-py scripts/run_sample_baselines.py --samples data/local_samples/library-homeoffice_000000.npz --reference last --out results/issue19/library-last
+py scripts/verify_reference_scene.py --scene-dir ../../cs566-drive-slice/library-homeoffice --out results/issue19/library-validation
 ```
 
-Record that scene, burst, frame range, crop, reference selection, and observed
-ground-truth pose agreement before closing #19. A second `kitchen1` burst or
-a synthetic test does not satisfy the additional-scene requirement.
+Adjust `--scene-dir` to the local downloaded scene. Committed code contains
+no personal absolute paths. Ignored outputs include a manifest with input
+and source hashes, CSV scores, raw float reconstructions and contribution
+counts, and comparison PNGs. Metrics use the existing Track 4
+`evaluate_channels` with `clip(2.7 * reconstruction,0,1)` for every method,
+unchanged GT, and the entire identical crop. No gain is fitted to the GT,
+no method-specific scoring mask is selected, and no reconstruction is shifted
+to improve its score. This is an additional-scene development check, not a
+held-out benchmark or a TAA comparison.
+
+| Method | Burst 0 PSNR (dB) | Burst 0 SSIM | Burst 1 PSNR (dB) | Burst 1 SSIM |
+|---|---:|---:|---:|---:|
+| Naive average | 15.2007 | 0.2361 | 14.9467 | 0.2147 |
+| Aligned, first reference | 14.7673 | 0.1841 | 14.2724 | 0.1623 |
+| Aligned, last reference | 15.7095 | 0.4026 | 15.6810 | 0.3833 |
+
+The existing phase-correlation diagnostic estimates the shift required to
+bring each reference group into the GT coordinates. For burst 0, `(dy,dx)`
+changes from `(1.3,-6.0)` for the first group to `(0.0,-0.2)` for the last;
+the respective peak values are 0.09 and 0.20. For burst 1, the shifts are
+`(4.0,-13.7)` and `(0.1,-0.6)`, with peaks 0.05 and 0.17. This is approximate
+global translation, with noisy estimates at low peaks, rather than a claim
+that all regions share a single exact displacement. The aligned-last
+reconstruction has the same measured residual shift as its reference in
+both bursts. Inspection of both comparison images also shows the shelf and
+globe contours closer to GT with the last reference.
+
+These measurements satisfy #19's additional-scene verification requirement
+for the tested settings. They support the last-reference default without
+establishing universal improvement across scenes or solving the remaining
+intensity-response mismatch. The installed Python 3.14.7, NumPy 2.5.3, and
+Pillow 12.3.0 versions are recorded in the manifest; this does not claim
+reproduction of the pinned environment. GitHub issue closure remains a
+separate review action.
 
 ## Limits and evaluation status
 
@@ -144,7 +180,9 @@ merging, partial groups, input validation, and runner artifact/provenance
 checks. Sample smoke tests check shapes and ranges. These checks do not
 establish improved reconstruction quality on the real samples.
 
-PSNR/SSIM for these new first/last runs have not yet been run. Earlier
+PSNR/SSIM for the original 256-frame first/last sample runs have not been
+rerun. The full-burst additional-scene measurements above cover the updated
+aligner. Earlier
 first-reference sample metrics are documented in `docs/midTerm-evaluation.md`
 and the mid-term report. Track 4 should evaluate any new comparisons against
 the same ground truth and spatial support, using its agreed shared intensity
