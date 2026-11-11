@@ -5,6 +5,8 @@ averaging, block-aligned averaging and TAA, including negative TAA results.
 Both were run on November 11, 2026 with the unchanged production aligner.
 They are Bernoulli simulations with known photon-detection probabilities,
 not Single Photon Challenge scenes, visionsim runs or held-out evaluation.
+An additional real kitchen1 crop from the completed full-burst study appears
+below, with its separate SPC intensity rule and provenance.
 
 ## Reproduction and common protocol
 
@@ -108,9 +110,41 @@ it is not evidence of correct disocclusion handling.
 | Aligned | 21.7157 | 0.805808 |
 | TAA | 20.7482 | 0.731874 |
 
+## Real kitchen1 motion
+
+![Real kitchen1 burst 1 motion crop](assets/taa-failures/kitchen1_000001.png)
+
+This example uses all 1,024 frames of kitchen1 burst 1 from the team Drive
+slice. The source study uses the central 300x304 crop; this figure displays
+the predetermined central 128x128 subcrop `(336,464,336,464)` in original
+image coordinates, selected before inspecting the full-burst results.
+All reconstructions use the agreed fixed gain of 2.7, with unchanged GT.
+The final reference group is frames 960 through 1023. Retention and validity
+describe the last processed group, frames 896 through 959.
+
+Naive averaging smears the plant and countertop. Alignment recovers the
+plant's contours, while TAA leaves visible photon noise in the planter and
+background. On the full 300x304 scoring crop, TAA gains 0.1989 dB PSNR over
+alignment but loses 0.038289 SSIM. Those are the
+[main study's scores](taa-study.md), not separately selected subcrop metrics.
+All pixels in the displayed crop have a valid last update, and mean retention
+is 0.747011. The retention map does not establish correct alignment or label
+disocclusion; the synthetic case above supplies known visibility geometry.
+
+After generating the full study with `--save-arrays`, reproduce this figure:
+
+```bash
+venv/bin/python scripts/render_taa_study_crop.py
+```
+
+The [figure manifest](assets/taa-failures/kitchen1_000001.json) records source
+archive and study-manifest hashes, original crop coordinates, gain, frame
+ranges, and renderer hashes. The renderer checks the archive hash before
+reading it and does not recompute or tune the reconstructions.
+
 ## Limits
 
-These are two designed examples with one seeded noise realization each.
+The synthetic cases are two designed examples with one seeded noise realization each.
 They isolate plausible failure mechanisms and provide reproducible crops,
 not a motion-speed sweep or an estimate of average dataset performance.
 The texture is deliberately simple and repetitive, which can also make
