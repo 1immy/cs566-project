@@ -1,0 +1,228 @@
+{
+  "purpose": "issues #21 and #27: shared-protocol comparison and single-component ablations",
+  "data_status": "full-burst development study; not held out",
+  "intensity_rule": "clip(gain * reconstruction, 0, 1); ground truth unchanged",
+  "intensity_agreement": "https://github.com/1immy/cs566-project/issues/18#issuecomment-6552346154",
+  "gain": 2.7,
+  "gain_scope": "identical fixed gain for every scene and method",
+  "metrics": "existing evaluate_channels; arithmetic mean per-channel PSNR/SSIM, 7x7 uniform reflect SSIM",
+  "scoring_support": "all pixels of identical crop; no fitted gain or scoring alignment",
+  "reference": "last",
+  "group_size": 64,
+  "update_order": "reference initializes history once; other groups update in original chronological order",
+  "confidence_map": "last processed update retention fraction; use valid_update_mask to distinguish missing evidence",
+  "configs": {
+    "taa_disabled": {
+      "radius": 1,
+      "clamp_margin": 0.05,
+      "rejection_scale": 0.1,
+      "motion_scale": 8.0,
+      "clamp": false,
+      "adaptive": false,
+      "motion_weighting": true,
+      "disagreement_weighting": true
+    },
+    "clamp_only": {
+      "radius": 1,
+      "clamp_margin": 0.05,
+      "rejection_scale": 0.1,
+      "motion_scale": 8.0,
+      "clamp": true,
+      "adaptive": false,
+      "motion_weighting": true,
+      "disagreement_weighting": true
+    },
+    "blend_only": {
+      "radius": 1,
+      "clamp_margin": 0.05,
+      "rejection_scale": 0.1,
+      "motion_scale": 8.0,
+      "clamp": false,
+      "adaptive": true,
+      "motion_weighting": true,
+      "disagreement_weighting": false
+    },
+    "confidence_only": {
+      "radius": 1,
+      "clamp_margin": 0.05,
+      "rejection_scale": 0.1,
+      "motion_scale": 8.0,
+      "clamp": false,
+      "adaptive": true,
+      "motion_weighting": false,
+      "disagreement_weighting": true
+    },
+    "taa": {
+      "radius": 1,
+      "clamp_margin": 0.05,
+      "rejection_scale": 0.1,
+      "motion_scale": 8.0,
+      "clamp": true,
+      "adaptive": true,
+      "motion_weighting": true,
+      "disagreement_weighting": true
+    }
+  },
+  "randomness": "none",
+  "samples": [
+    {
+      "scene": "kitchen1",
+      "burst": 0,
+      "inputs": [
+        "data/drive-slice/kitchen1/000000.npy",
+        "data/drive-slice/kitchen1/000000.png"
+      ],
+      "input_sha256": {
+        "000000.npy": "fc2c52fbba39823e989b2a02d2f09e12e04f356ed6300bd362f0a653a2a5dcd6",
+        "000000.png": "ee0e0f95b017082f9747255c054b2b27cc926214f4c501f3e830db9be8be2d2d"
+      },
+      "shape": [
+        1024,
+        300,
+        304,
+        3
+      ],
+      "crop_y0_y1_x0_x1": [
+        250,
+        550,
+        248,
+        552
+      ],
+      "frame_indices_inclusive": [
+        0,
+        1023
+      ],
+      "frame_index_scope": "original burst",
+      "reference_frames_inclusive": [
+        960,
+        1023
+      ],
+      "last_update_frames_inclusive": [
+        896,
+        959
+      ],
+      "baseline_control": {
+        "max_abs_error": 5.960464477539063e-08,
+        "atol": 1.7881393432617188e-06,
+        "rtol": 0,
+        "coverage_equal": true,
+        "disabled_history_weights_equal_counts": true
+      },
+      "artifacts_sha256": {
+        "kitchen1_000000_comparison.png": "5eba3d4f9a299e354d17ea8620d34c4d6b29c501ac7009210fd2a0cb779edf04",
+        "kitchen1_000000_reconstructions.npz": "5578645620f8b014f39c9cfdb1c160187771bd6953e9b929baa204669d82f0ff"
+      }
+    },
+    {
+      "scene": "kitchen1",
+      "burst": 1,
+      "inputs": [
+        "data/drive-slice/kitchen1/000001.npy",
+        "data/drive-slice/kitchen1/000001.png"
+      ],
+      "input_sha256": {
+        "000001.npy": "5e0f3b0962bdb0e1979b34e4b93dfeee117f559c6411b9a7200f2bb0b27a5819",
+        "000001.png": "60e2e16b5e271720f1099f44d9576f2952c50d0796b285100d8e5485b0f01acd"
+      },
+      "shape": [
+        1024,
+        300,
+        304,
+        3
+      ],
+      "crop_y0_y1_x0_x1": [
+        250,
+        550,
+        248,
+        552
+      ],
+      "frame_indices_inclusive": [
+        0,
+        1023
+      ],
+      "frame_index_scope": "original burst",
+      "reference_frames_inclusive": [
+        960,
+        1023
+      ],
+      "last_update_frames_inclusive": [
+        896,
+        959
+      ],
+      "baseline_control": {
+        "max_abs_error": 5.960464477539063e-08,
+        "atol": 1.7881393432617188e-06,
+        "rtol": 0,
+        "coverage_equal": true,
+        "disabled_history_weights_equal_counts": true
+      },
+      "artifacts_sha256": {
+        "kitchen1_000001_comparison.png": "023d7ddfff66d388217f19d2be99a71492b8d2579d7163792f10efad8152ad2f",
+        "kitchen1_000001_reconstructions.npz": "2813d88b3cfa9a71f1149e38e4c55e20ccb989453ed4d596ba3877da9c5ed2c4"
+      }
+    },
+    {
+      "scene": "kitchen1",
+      "burst": 10,
+      "inputs": [
+        "data/drive-slice/kitchen1/000010.npy",
+        "data/drive-slice/kitchen1/000010.png"
+      ],
+      "input_sha256": {
+        "000010.npy": "108b90a4852c336d28c1dc085b85687fc52dd6e4aea8149a25d3255045cdaa63",
+        "000010.png": "6f9bb23d01dbadd644ee38d774a5daf5eba39cd9c71506e7cb4a81be8260f880"
+      },
+      "shape": [
+        1024,
+        300,
+        304,
+        3
+      ],
+      "crop_y0_y1_x0_x1": [
+        250,
+        550,
+        248,
+        552
+      ],
+      "frame_indices_inclusive": [
+        0,
+        1023
+      ],
+      "frame_index_scope": "original burst",
+      "reference_frames_inclusive": [
+        960,
+        1023
+      ],
+      "last_update_frames_inclusive": [
+        896,
+        959
+      ],
+      "baseline_control": {
+        "max_abs_error": 5.960464477539063e-08,
+        "atol": 1.7881393432617188e-06,
+        "rtol": 0,
+        "coverage_equal": true,
+        "disabled_history_weights_equal_counts": true
+      },
+      "artifacts_sha256": {
+        "kitchen1_000010_comparison.png": "caacb093ac255a4edd28b1362ac4919eac49e3391cac7745142b14af958e042f",
+        "kitchen1_000010_reconstructions.npz": "f4d6866e743445701ec74fb5a085fcc6aea544dbe7f44953735123c72e07880f"
+      }
+    }
+  ],
+  "versions": {
+    "python": "3.14.3",
+    "numpy": "2.5.4",
+    "pillow": "13.0.0"
+  },
+  "source_sha256": {
+    "scripts/run_taa_study.py": "500a5412cd1c5bb40f3e4a998734531da5e69fe13982ea635ec0a0dd0d574f49",
+    "scripts/run_sample_taa.py": "6c48c522be789af36454de9f4396731db28d72e163e014536884cddd9fd9c523",
+    "scripts/run_evaluation.py": "fabea387289696c27c7ba788a93a22dde5189c0f0c13e42ce100d7df131ab01b",
+    "src/taa.py": "f8ddb703b03dcbb95079ca5759b6f15e0b76f466059a8915c38efe43da6fbe6c",
+    "src/alignment.py": "912053c9be97727fb8eeb4939f2a6d209906a515794e1b5487ef98e2ca412560",
+    "src/baseline.py": "0f519c5c86c4b6e08abbe9c2544ad37a758769d04188c6897497c13c475f3d6e",
+    "src/burst_io.py": "b5df3f24cf36b4aee1ec15f99ea9afa0de04ce78253a0535adcdc7111c8a5c43",
+    "src/evaluation.py": "5500bbe80477b0b05eb1949202856a84fda72326d8f5e7a6877ccffa15a3d560"
+  }
+}

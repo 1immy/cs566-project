@@ -1,6 +1,6 @@
 # Track 3: TAA history rejection
 
-For the subsequent fixed-gain sample measurements and the pending full-burst
+For the subsequent fixed-gain sample measurements and the completed full-burst
 comparison, see [the comparison and ablation study](taa-study.md). Independent
 component switches and optional last-group references are documented in
 [component controls](taa-component-controls.md); measured synthetic failure

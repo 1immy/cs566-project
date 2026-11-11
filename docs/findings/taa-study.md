@@ -3,12 +3,12 @@
 This is the Track 3 implementation and measurement record for issues
 [#21](https://github.com/1immy/cs566-project/issues/21) and
 [#27](https://github.com/1immy/cs566-project/issues/27).
-The full kitchen1 comparison on bursts 0, 1, and 10 is **not yet run**.
-The full `.npy`/`.png` pairs are unavailable in this checkout and the connected
-Drive account could not read the documented shared slice on November 11, 2026.
-The two committed samples do not contain burst 10 or the final 768 frames
-of either available burst. Neither issue is complete until the full-data
-tables below can be produced and interpreted.
+The full kitchen1 comparison on bursts 0, 1, and 10 was completed on
+November 11, 2026 using the downloaded team Drive slice. All seven methods
+were run on each complete burst with the shared protocol below. Alignment
+improves on naive averaging on both metrics for every burst. Full TAA changes
+PSNR in mixed directions and lowers SSIM on all three bursts. The component
+ablations do not identify a method that improves both metrics on every burst.
 
 ## Shared protocol
 
@@ -68,6 +68,75 @@ not introduce an alignment-confidence model or tune parameters against GT.
 The final retention map describes the penultimate group when the last group
 is the reference; it does not summarize every update.
 
+## Full-burst results: issue #21
+
+All rows below use the 300x304 crop and all 1,024 frames. The last reference
+group spans frames 960 through 1023, and the last processed TAA update spans
+896 through 959. The full-data inputs for bursts 0 and 1 reproduce their
+committed binary samples and ground-truth crops exactly.
+
+| Scene / burst | Method | PSNR (dB) | SSIM |
+|---|---|---:|---:|
+| kitchen1 / 000000 | naive | 15.1106 | 0.298136 |
+| kitchen1 / 000000 | aligned | 16.2930 | 0.430630 |
+| kitchen1 / 000000 | taa | 16.2443 | 0.391412 |
+| kitchen1 / 000001 | naive | 14.5170 | 0.303463 |
+| kitchen1 / 000001 | aligned | 16.9756 | 0.407346 |
+| kitchen1 / 000001 | taa | 17.1746 | 0.369056 |
+| kitchen1 / 000010 | naive | 14.6750 | 0.358450 |
+| kitchen1 / 000010 | aligned | 15.8333 | 0.484429 |
+| kitchen1 / 000010 | taa | 15.8007 | 0.454473 |
+
+Full TAA loses 0.0487 dB on burst 0 and 0.0326 dB on burst 10 relative to
+aligned averaging, while gaining 0.1989 dB on burst 1. Its SSIM differences
+are -0.039218, -0.038289, and -0.029955, respectively. A PSNR improvement
+alone on burst 1 therefore does not establish an overall quality improvement.
+The [real-motion crop](taa-failure-gallery.md#real-kitchen1-motion) displays
+the corresponding reconstructions and TAA diagnostics.
+
+The [complete seven-method table](assets/taa-study-full/findings.md),
+[per-channel CSV](assets/taa-study-full/results.csv), and
+[manifest](assets/taa-study-full/manifest.json) provide the unrounded scores,
+input/source hashes, configuration and disabled-control evidence. Comparison
+figures are available for [burst 0](assets/taa-study-full/kitchen1_000000_comparison.png),
+[burst 1](assets/taa-study-full/kitchen1_000001_comparison.png), and
+[burst 10](assets/taa-study-full/kitchen1_000010_comparison.png).
+Raw bursts and float reconstruction archives remain in ignored local storage.
+
+## Component analysis: issue #27
+
+These are single-component variants on exactly the same three bursts and
+scoring rule as the table above. Values are differences from aligned averaging.
+
+| Burst | Component | Delta PSNR (dB) | Delta SSIM |
+|---|---|---:|---:|
+| 000000 | Clamp only | -0.0032 | +0.000800 |
+| 000000 | Blend only | -0.0483 | -0.039218 |
+| 000000 | Confidence only | -0.0016 | +0.000789 |
+| 000001 | Clamp only | +0.0382 | +0.007475 |
+| 000001 | Blend only | +0.2006 | -0.038200 |
+| 000001 | Confidence only | +0.0502 | +0.006174 |
+| 000010 | Clamp only | -0.0024 | +0.000431 |
+| 000010 | Blend only | -0.0323 | -0.029941 |
+| 000010 | Confidence only | -0.0015 | +0.000432 |
+
+There is no single best ingredient across both metrics. Displacement-only
+blending gives the largest PSNR gain on burst 1, but reduces PSNR on the
+other two bursts and SSIM on all three. Clamp-only and neighborhood-confidence-only
+retention slightly improve SSIM on all three bursts; their PSNR changes are
+small losses on bursts 0 and 10 and gains on burst 1. Clamp-only has the
+highest SSIM among isolated variants on bursts 0 and 1, while confidence-only
+is marginally higher on burst 10. Confidence-only exceeds clamp-only PSNR on
+each burst, so the metrics favor different components.
+
+The full-TAA and blend-only results are close, suggesting that displacement
+weighting dominates the changes in this configuration. Displacement alone
+does not identify incorrect alignment and can discard useful history from
+correctly registered groups. These observations motivate further study;
+they do not justify tuning the reported defaults against these three crops.
+Single-component ablations do not quantify all interactions between components.
+No held-out or motion-speed-sweep conclusion follows from one development scene.
+
 ## Executed sample validation
 
 Run on November 11, 2026:
@@ -91,21 +160,24 @@ the isolated components, displacement-only blending gave the largest
 sample gains over alignment: 0.0048 dB / 0.000518 SSIM on burst 0, and
 0.0095 dB / 0.002390 SSIM on burst 1. Full TAA gained 0.0076 dB / 0.000873
 and 0.0100 dB / 0.002713, respectively. These small, single-scene development
-differences do not establish a general benefit or resolve issue #27.
+differences do not establish a general benefit. Issue #27's full-burst
+component comparison is reported separately above.
 The confidence-only and clamp-only changes were smaller and also positive
 on these particular samples. The synthetic
 [failure gallery](taa-failure-gallery.md) records regimes with negative
 results separately; its photon-domain scores are not pooled with SPC scores.
 
-## Remaining completion evidence
+## Completion evidence
 
 | Required run | Status |
 |---|---|
-| Full kitchen1 burst 0, all seven methods | Not yet run: full input unavailable |
-| Full kitchen1 burst 1, all seven methods | Not yet run: full input unavailable |
-| Full kitchen1 burst 10, all seven methods | Not yet run: full input unavailable |
+| Full kitchen1 burst 0, all seven methods | Measured, with scores and provenance committed |
+| Full kitchen1 burst 1, all seven methods | Measured, with scores and provenance committed |
+| Full kitchen1 burst 10, all seven methods | Measured, with scores and provenance committed |
 
-Once inputs are available, run the command above, retain the actual generated
-table and manifest, compare all component deltas on those same three bursts,
-and replace this pending status with the measured findings. Do not infer the
-missing values from the committed samples or the historical midterm table.
+The disabled-TAA reconstruction agrees with the aligned baseline within the
+recorded float32 tolerance on all three bursts. Geometric frame counts match
+for every variant, and disabled-TAA accumulation weights match baseline counts
+exactly. The saved arrays were independently rescored with `evaluate_channels`
+to check every per-channel and mean value in the CSV. All fixed public
+interfaces and the shared alignment/evaluation implementations remain unchanged.

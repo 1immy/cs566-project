@@ -39,8 +39,8 @@ class TAAStudyTests(unittest.TestCase):
                 manifest = study.main(["--samples", str(path), "--out", str(out),
                                        "--group-size", "2", "--save-arrays"])
             self.assertEqual(manifest, json.loads((out / "manifest.json").read_text()))
-            self.assertIn("full kitchen1 0,1,10 not yet run", manifest["data_status"])
-            self.assertIn("**not yet run**", (out / "findings.md").read_text())
+            self.assertIn("full kitchen1 0,1,10 excluded from this run", manifest["data_status"])
+            self.assertIn("does not evaluate full kitchen1", (out / "findings.md").read_text())
             self.assertNotIn(str(directory), json.dumps(manifest))
             record = manifest["samples"][0]
             self.assertEqual((record["scene"], record["burst"]), ("test_scene", 2))

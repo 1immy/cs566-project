@@ -71,7 +71,7 @@ def _table(rows):
 
 def _write_report(path, rows, full, reference, group_size, gain):
     status = ("Full-burst development comparison; these scenes are not held out."
-              if full else "Development samples only. Full kitchen1 bursts 0, 1, and 10: **not yet run**.")
+              if full else "Development samples only; this run does not evaluate full kitchen1 bursts 0, 1, and 10.")
     text = ("# TAA comparison and component ablations\n\n" + status + "\n\n"
             f"Shared gain: {gain:g}; reference: {reference}; group size: {group_size}. "
             "Every pixel of the same input crop is scored. See manifest.json for "
@@ -202,7 +202,7 @@ def main(argv=None):
     manifest = {
         "purpose": "issues #21 and #27: shared-protocol comparison and single-component ablations",
         "data_status": ("full-burst development study; not held out" if args.scene_dir
-                        else "development samples only; full kitchen1 0,1,10 not yet run"),
+                        else "development samples only; full kitchen1 0,1,10 excluded from this run"),
         "intensity_rule": "clip(gain * reconstruction, 0, 1); ground truth unchanged",
         "intensity_agreement": "https://github.com/1immy/cs566-project/issues/18#issuecomment-6552346154",
         "gain": args.gain, "gain_scope": "identical fixed gain for every scene and method",

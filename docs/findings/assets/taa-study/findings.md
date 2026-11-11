@@ -1,6 +1,6 @@
 # TAA comparison and component ablations
 
-Development samples only. Full kitchen1 bursts 0, 1, and 10: **not yet run**.
+Development samples only; this run does not evaluate full kitchen1 bursts 0, 1, and 10.
 
 Shared gain: 2.7; reference: last; group size: 64. Every pixel of the same input crop is scored. See manifest.json for input/source hashes, crop and frame indices, and all component settings.
 

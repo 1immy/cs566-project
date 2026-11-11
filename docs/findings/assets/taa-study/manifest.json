@@ -1,6 +1,6 @@
 {
   "purpose": "issues #21 and #27: shared-protocol comparison and single-component ablations",
-  "data_status": "development samples only; full kitchen1 0,1,10 not yet run",
+  "data_status": "development samples only; full kitchen1 0,1,10 excluded from this run",
   "intensity_rule": "clip(gain * reconstruction, 0, 1); ground truth unchanged",
   "intensity_agreement": "https://github.com/1immy/cs566-project/issues/18#issuecomment-6552346154",
   "gain": 2.7,
@@ -166,7 +166,7 @@
     "pillow": "13.0.0"
   },
   "source_sha256": {
-    "scripts/run_taa_study.py": "6019b660e99e95a0f81cea8ec81e686fcfc02823a4c8db4c81eb5646bfeea172",
+    "scripts/run_taa_study.py": "500a5412cd1c5bb40f3e4a998734531da5e69fe13982ea635ec0a0dd0d574f49",
     "scripts/run_sample_taa.py": "6c48c522be789af36454de9f4396731db28d72e163e014536884cddd9fd9c523",
     "scripts/run_evaluation.py": "fabea387289696c27c7ba788a93a22dde5189c0f0c13e42ce100d7df131ab01b",
     "src/taa.py": "f8ddb703b03dcbb95079ca5759b6f15e0b76f466059a8915c38efe43da6fbe6c",
