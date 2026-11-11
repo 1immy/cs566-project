@@ -141,6 +141,72 @@ class TAAPipelineTests(unittest.TestCase):
                 self.assertTrue(np.all((taa.confidence_map >= 0) & (taa.confidence_map <= 1)))
                 np.testing.assert_array_equal(taa.frame_counts, counts)
 
+    def test_last_reference_uses_partial_group_once_without_reordering(self):
+        cube = np.zeros((10, 4, 4, 3), dtype=np.uint8)
+        cube[0] = 1  # First group mean 0.25.
+        cube[4:6] = 1  # Second group mean 0.5.
+        cube[8:] = 1  # Last (partial) group mean 1.
+        seen_means = []
+
+        def warp(group, reference):
+            np.testing.assert_array_equal(reference, 1)
+            seen_means.append(float(group.mean()))
+            current = naive_average(group)
+            current[0] = np.nan
+            return current, np.zeros((4, 4, 2), dtype=np.float32)
+
+        with patch("src.taa.align_warp", side_effect=warp):
+            result = reconstruct_taa(cube, 4, TAAConfig(clamp=False, adaptive=False),
+                                     reference="last")
+        self.assertEqual(seen_means, [0.25, 0.5])
+        np.testing.assert_allclose(result.reconstruction[1:], 0.5)
+        np.testing.assert_array_equal(result.reconstruction[0], 1)
+        np.testing.assert_array_equal(result.frame_counts[1:], 10)
+        np.testing.assert_array_equal(result.frame_counts[0], 2)
+        np.testing.assert_array_equal(result.history_weights, result.frame_counts)
+        np.testing.assert_array_equal(result.valid_update_mask[0], False)
+
+    def test_last_reference_keeps_reference_fixed_when_history_changes(self):
+        cube = np.zeros((6, 4, 4, 3), dtype=np.uint8)
+        cube[2:4] = 1
+        observed_references = []
+
+        def warp(group, reference):
+            observed_references.append(reference.copy())
+            return naive_average(group), np.zeros((4, 4, 2), dtype=np.float32)
+
+        with patch("src.taa.align_warp", side_effect=warp):
+            result = reconstruct_taa(cube, 2, reference="last")
+        for reference in observed_references:
+            np.testing.assert_array_equal(reference, 0)
+        self.assertEqual(len(observed_references), 2)
+        # Last processed update is group [2:4], not the reference group [4:6].
+        self.assertTrue(np.all(result.reconstruction > 0.99))
+        self.assertTrue(np.all(result.confidence_map < 0.001))
+
+    def test_last_reference_disabled_matches_baseline_on_committed_samples(self):
+        for index in (0, 1):
+            with self.subTest(sample=index):
+                cube = load_sample(f"data/samples/kitchen1_{index:06d}.npz")
+                baseline, counts = aligned_average(cube, 96, reference="last")
+                result = reconstruct_taa(cube, 96, TAAConfig(clamp=False, adaptive=False),
+                                         reference="last")
+                np.testing.assert_allclose(result.reconstruction, baseline, atol=1e-7, rtol=0)
+                np.testing.assert_array_equal(result.frame_counts, counts)
+                np.testing.assert_array_equal(result.history_weights, counts)
+
+    def test_reference_selection_for_single_group_and_invalid_values(self):
+        cube = np.ones((3, 4, 4, 3), dtype=np.uint8)
+        for reference in ("first", "last"):
+            with patch("src.taa.align_warp", side_effect=AssertionError("unexpected warp")):
+                result = reconstruct_taa(cube, reference=reference)
+            np.testing.assert_array_equal(result.reconstruction, 1)
+            np.testing.assert_array_equal(result.frame_counts, 3)
+            np.testing.assert_array_equal(result.confidence_map, 0)
+        for reference in ("middle", "", None, 0, ["last"]):
+            with self.subTest(reference=reference), self.assertRaises(ValueError):
+                reconstruct_taa(cube, reference=reference)
+
     def test_invalid_bursts_and_group_sizes(self):
         cube = np.zeros((2, 4, 4, 3), dtype=np.uint8)
         for bad in (cube[:0], cube[..., 0], cube.astype(float), cube + 2):
