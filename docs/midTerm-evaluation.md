@@ -1,61 +1,69 @@
 # CS566 Track 4: Mid-term Evaluation
 
-This implementation adds PSNR and SSIM evaluation and a comparison script for naive averaging, aligned averaging, and TAA.
+This script compares naive averaging, aligned averaging, and TAA using PSNR and SSIM. It reports scores for each RGB channel and the average.
 
-## Files
+## Running the tests
 
-- `src/evaluation.py` — Computes PSNR and SSIM.
-- `scripts/run_evaluation.py` — Runs reconstruction comparisons and saves results.
-- `tests/test_evaluation.py` — Tests the evaluation functions.
-
-## Usage
-
-Run the tests from the project root:
+From the repository root:
 
 ```powershell
 py -m unittest discover -s tests -v
 ```
 
-Run the evaluation on the two sample bursts:
+## Full kitchen1 evaluation
+
+Download the shared kitchen1 data and make sure the folder contains bursts 0, 1, and 10, along with their ground-truth PNGs.
+
+The October 29 report used a 300×304 center crop, 1024 frames, groups of 64, and the last group as the reference. For the last-group runs, the burst was reversed before running the original alignment code.
+
+To run the same five methods with these settings:
 
 ```powershell
-py scripts/run_evaluation.py --samples data/samples/kitchen1_000000.npz data/samples/kitchen1_000001.npz --gain 2.7
+py scripts/run_evaluation.py --scene-dir data/train/kitchen1 --bursts 0 1 10 --crop 250 550 248 552 --frames 1024 --group-size 64 --reference last --report-table --gain 2.7 --out results/evaluation
 ```
 
-To evaluate previously generated TAA reconstructions:
+Change `--scene-dir` if your kitchen1 folder is somewhere else. The crop arguments are `y0 y1 x0 x1`. The x values must be divisible by 8 because the photon data is bit-packed.
+
+The original report used a fitted gain for each reconstruction. We're now using a fixed gain of 2.7 for all methods, following issue #18. This means the new results use the same crop, frames, and reference settings as Table 1, but the PSNR values may differ. SSIM is also included.
+
+## Sample evaluation
+
+Run the two samples included in the repository:
 
 ```powershell
-py scripts/run_evaluation.py --archives results/sample_taa/kitchen1_000000_reconstructions.npz results/sample_taa/kitchen1_000001_reconstructions.npz --gain 2.7
+py scripts/run_evaluation.py --samples data/samples/kitchen1_000000.npz data/samples/kitchen1_000001.npz --gain 2.7 --out results/evaluation
 ```
 
-Other reconstruction methods can be specified using `--pipeline package.module:function`. The function takes `(cube, group_size=64)` and returns an RGB image, a tuple containing the image, or an object with a `.reconstruction` attribute.
+To evaluate previously saved reconstructions:
 
-## Output
+```powershell
+py scripts/run_evaluation.py --archives results/sample_taa/kitchen1_000000_reconstructions.npz results/sample_taa/kitchen1_000001_reconstructions.npz --out results/evaluation
+```
 
-Results are saved in `results/evaluation_midterm/`:
+Additional methods can be passed using `--pipeline package.module:function`.
 
-- `results.csv` — Per-channel and mean PSNR/SSIM for each method.
-- `protocol.json` — Evaluation settings.
-- `*_comparison.png` — Comparison figures for each burst.
+## Output files
 
-## Evaluation
+All results are saved in `results/evaluation/` by default.
 
-All reconstruction methods use the same intensity adjustment:
+- `results.csv` contains PSNR and SSIM scores for each method and burst.
+- `protocol.json` records the settings used for the evaluation.
+- `*_comparison.png` contains the ground truth and reconstructed images.
+
+The full kitchen1 comparison produces 15 rows, covering five methods across three bursts.
+
+The old `results/evaluation_check/` folder can be removed if it only contains duplicate results. Use `results/evaluation/` for new runs.
+
+Each run overwrites the CSV and protocol files in the selected output folder.
+
+## Intensity correction
+
+The reconstructed images are darker than the ground truth, so we apply the same gain to every method:
 
 ```python
-np.clip(2.7 * reconstruction, 0, 1)
+mapped = np.clip(2.7 * reconstruction, 0, 1)
 ```
 
-The gain of 2.7 is used for the sample evaluation and is not calibrated to the camera response.
+Ground truth is converted to [0,1] without an additional gain. More details are in `docs/findings/evaluation-intensity.md`.
 
-`evaluate(reconstruction, ground_truth)` returns mean PSNR and SSIM. `evaluate_channels()` also reports individual RGB channel values.
-
-SSIM uses a 7×7 uniform window with reflect padding.
-
-## Limitations
-
-The sample evaluation uses 256 frames and a 128×128 crop for kitchen1 bursts 0 and 1. The existing mid-term report uses all 1024 frames, a 300×304 crop, and last-group alignment for bursts 0, 1, and 10.
-
-The current baseline and TAA implementations align to the first group. Because the evaluation settings differ, the sample results should not be directly compared with the mid-term report's Table 1.
-
-Reproducing the report's results requires the full kitchen1 bursts and a consistent last-group reference for both aligned averaging and TAA.
+PSNR and SSIM are calculated in `src/evaluation.py`. SSIM uses a 7×7 window with reflect padding, and the existing `evaluate(reconstruction, ground_truth)` interface is unchanged.
