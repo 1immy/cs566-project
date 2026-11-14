@@ -4,8 +4,9 @@ Examples:
   py scripts/run_evaluation.py --samples data/samples/kitchen1_000000.npz data/samples/kitchen1_000001.npz
   py scripts/run_evaluation.py --scene-dir data/train/kitchen1 --bursts 0 1 10 --crop 250 550 248 552 --frames 1024 --reference last
 
-Reference 'last' reproduces the mid-term report's time-reversed burst
-convention. Every reconstruction uses the same fixed gain (default 2.7).
+Reference 'last' aligns every group to the final group of the burst (the pose
+the ground truth was captured at) via the reference= argument of the pipeline;
+frames are never reversed. Every reconstruction uses the same fixed gain (default 2.7).
 """
 import argparse
 import csv
@@ -60,8 +61,8 @@ def _custom_pipeline(spec, cube, group_size):
     return result
 
 
-def _select_cube(cube, frames=None, crop=None, reference='first'):
-    """Select frames/crop before reconstruction; reverse time for last ref."""
+def _select_cube(cube, frames=None, crop=None):
+    """Select the first N frames and the crop, in original time order."""
     if frames is not None:
         if frames > len(cube):
             raise ValueError(f'requested {frames} frames, only {len(cube)} available')
@@ -71,32 +72,27 @@ def _select_cube(cube, frames=None, crop=None, reference='first'):
         if not (0 <= y0 < y1 <= cube.shape[1] and 0 <= x0 < x1 <= cube.shape[2]):
             raise ValueError(f'crop {crop} is outside the {cube.shape[1:3]} image')
         cube = cube[:, y0:y1, x0:x1]
-    if reference == 'last':
-        cube = cube[::-1]
     return cube
 
 
-def _reconstruct(cube, group_size, extras, report_table=False):
+def _reconstruct(cube, group_size, extras, reference='first', report_table=False):
     if report_table:
-        # Table 1 compared the first and last reference and a clamp-only TAA.
-        # The original last-reference convention runs the same code with time reversed.
-        original = cube
-        reversed_cube = original[::-1]
+        # Table 1 variants. Reference is selected with reference=, not by reversing time.
+        clamp_only = TAAConfig(clamp=True, adaptive=False)
         return {
-            'naive': naive_average(original),
-            'aligned_first': aligned_average(original, group_size)[0],
-            'aligned_last': aligned_average(reversed_cube, group_size)[0],
+            'naive': naive_average(cube),
+            'aligned_first': aligned_average(cube, group_size, reference='first')[0],
+            'aligned_last': aligned_average(cube, group_size, reference='last')[0],
             'clamp_only_last': reconstruct_taa(
-                reversed_cube, group_size, TAAConfig(clamp=True, adaptive=False)
-            ).reconstruction,
+                cube, group_size, clamp_only, reference='last').reconstruction,
             'taa_last': reconstruct_taa(
-                reversed_cube, group_size, TAAConfig()
-            ).reconstruction,
+                cube, group_size, TAAConfig(), reference='last').reconstruction,
         }
 
     methods = {'naive': naive_average(cube),
-               'aligned': aligned_average(cube, group_size, reference="first")[0],
-               'taa': reconstruct_taa(cube, group_size, TAAConfig()).reconstruction}
+               'aligned': aligned_average(cube, group_size, reference=reference)[0],
+               'taa': reconstruct_taa(cube, group_size, TAAConfig(),
+                                      reference=reference).reconstruction}
     for spec in extras:
         label = spec.replace(':', '_')
         if label in methods:
@@ -110,11 +106,11 @@ def _sample_images(path, group_size, extras, frames=None, crop=None, reference='
     gt_path = path.with_name(path.stem + '_gt.png')
     with Image.open(gt_path) as image:
         gt = np.asarray(image.convert('RGB'), dtype=np.float32) / 255
-    cube = _select_cube(cube, frames, crop, 'first' if report_table else reference)
+    cube = _select_cube(cube, frames, crop)
     if crop is not None:
         y0, y1, x0, x1 = crop
         gt = gt[y0:y1, x0:x1]
-    return gt, _reconstruct(cube, group_size, extras, report_table), len(cube)
+    return gt, _reconstruct(cube, group_size, extras, reference, report_table), len(cube)
 
 
 def _full_images(scene_dir, index, group_size, extras, frames, crop, reference, report_table=False):
@@ -124,10 +120,8 @@ def _full_images(scene_dir, index, group_size, extras, frames, crop, reference, 
         raise ValueError(f'burst {index}: requested {frames} frames, got {len(cube)}')
     if not len(cube) or min(cube.shape[1:3]) < 2:
         raise ValueError(f'burst {index}: empty or too-small cube')
-    if reference == 'last' and not report_table:
-        cube = cube[::-1]
     gt = load_gt(scene_dir, index=index, crop=crop)
-    return gt, _reconstruct(cube, group_size, extras, report_table), len(cube)
+    return gt, _reconstruct(cube, group_size, extras, reference, report_table), len(cube)
 
 
 def _archive_images(path):
@@ -163,11 +157,11 @@ def main(argv=None):
                         help='indices in --scene-dir; default: 0 1 10')
     parser.add_argument('--crop', nargs=4, metavar=('Y0', 'Y1', 'X0', 'X1'), type=int,
                         help='pixel bounds, exclusive upper end; full-burst X bounds multiples of 8')
-    parser.add_argument('--frames', type=int, help='use the first N frames (before reversing)')
+    parser.add_argument('--frames', type=int, help='use the first N frames')
     parser.add_argument('--report-table', action='store_true',
                         help='compute all five original Table 1 method variants with PSNR and SSIM')
     parser.add_argument('--reference', choices=('first', 'last'), default='first',
-                        help='last reverses time exactly as in mid-term Table 1')
+                        help='align to the first or last group (ignored with --report-table)')
     parser.add_argument('--group-size', type=int, default=64)
     parser.add_argument('--gain', type=float, default=DEFAULT_EVALUATION_GAIN,
                         help='same fixed reconstruction gain for all scenes/methods; default 2.7')
@@ -182,6 +176,8 @@ def main(argv=None):
     crop = _check_crop(args.crop, parser, packed=args.scene_dir is not None)
     if args.report_table and args.pipeline:
         parser.error('--report-table uses the five original methods; additional --pipeline not supported')
+    if args.pipeline and args.reference == 'last':
+        parser.error('--pipeline functions take no reference argument; use --reference first')
     if args.archives and args.report_table:
         parser.error('--report-table requires raw cubes, not precomputed archives')
     if args.archives and (args.pipeline or args.frames is not None or crop is not None or args.reference != 'first'):
@@ -248,13 +244,13 @@ def main(argv=None):
             'scene_dir': str(args.scene_dir) if args.scene_dir else None,
             'bursts': args.bursts if args.scene_dir else None,
             'crop_y0_y1_x0_x1': list(crop) if crop is not None else None,
-            'frame_selection': 'first N frames, then reverse for last reference' if args.frames is not None else 'all available frames, reverse for last reference',
+            'frame_selection': 'first N frames, original time order' if args.frames is not None else 'all available frames, original time order',
             'frames_requested': args.frames,
             'frames_used': counts_by_burst,
             'group_size': args.group_size if not args.archives else None,
             'reference_group': ('mixed first/last as in Table 1' if args.report_table else args.reference) if not args.archives else 'unknown; precomputed archive',
             'report_table_variants': args.report_table,
-            'reference_implementation': 'reverse full selected cube for last-group methods; preserve first group for aligned_first' if args.report_table else 'reverse the frame order; existing first-group pipeline selects original last group' if args.reference == 'last' and not args.archives else 'native first group or precomputed archive',
+            'reference_implementation': 'reference= argument of aligned_average and reconstruct_taa; frames are never reversed',
             'intensity_rule': 'clip(gain * reconstruction, 0, 1)',
             'intensity_policy': 'fixed gain for all methods/scenes; no per-image or GT-fitted gains',
             'gain': args.gain,

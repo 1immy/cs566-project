@@ -14,7 +14,7 @@ py -m unittest discover -s tests -v
 
 Download the shared kitchen1 data and make sure the folder contains bursts 0, 1, and 10, along with their ground-truth PNGs.
 
-The October 29 report used a 300×304 center crop, 1024 frames, groups of 64, and the last group as the reference. For the last-group runs, the burst was reversed before running the original alignment code.
+The October 29 report used a 300×304 center crop, 1024 frames, groups of 64, and the last group as the reference. The last-group runs now use the `reference="last"` option of `aligned_average` and `reconstruct_taa` (added in PRs #42 and #43) instead of reversing the burst, so frames are always processed in their original order.
 
 To run the same five methods with these settings:
 

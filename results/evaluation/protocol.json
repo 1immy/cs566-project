@@ -1,15 +1,28 @@
 {
+  "source_type": "samples",
+  "scene_dir": null,
+  "bursts": null,
+  "crop_y0_y1_x0_x1": null,
+  "frame_selection": "all available frames, original time order",
+  "frames_requested": null,
+  "frames_used": {
+    "kitchen1_000000": 256,
+    "kitchen1_000001": 256
+  },
+  "group_size": 64,
+  "reference_group": "first",
+  "report_table_variants": false,
+  "reference_implementation": "reference= argument of aligned_average and reconstruct_taa; frames are never reversed",
   "intensity_rule": "clip(gain * reconstruction, 0, 1)",
-  "intensity_policy": "fixed gain chosen before scoring; never fitted to each method, scene, or ground truth",
+  "intensity_policy": "fixed gain for all methods/scenes; no per-image or GT-fitted gains",
   "gain": 2.7,
-  "gain_scope": "same fixed value for ALL scenes and methods",
-  "ground_truth_mapping": "none; PNG divided by 255",
-  "metric_protocol": "per-RGB-channel PSNR/SSIM, arithmetic channel means; SSIM 7x7 uniform reflect padded",
-  "method_reference": "existing first-group reference for aligned and TAA (not end-of-burst report reference)",
-  "evaluation_data": "committed development samples, not held-out evaluation",
+  "gain_scope": "same fixed value for all scenes, methods and RGB channels",
+  "ground_truth_mapping": "PNG divided by 255; no gain",
+  "metric_protocol": "per-RGB-channel PSNR/SSIM and arithmetic channel means; SSIM 7x7 uniform reflect padded",
+  "report_comparability": "Matches report scene/crop/frames/reference when configured; fixed 2.7 gain differs from report least-squares fitting, so PSNR will not exactly match Table 1",
   "inputs": [
-    "data\\samples\\kitchen1_000000.npz",
-    "data\\samples\\kitchen1_000001.npz"
+    "data/samples/kitchen1_000000.npz",
+    "data/samples/kitchen1_000001.npz"
   ],
   "rows": 6
 }

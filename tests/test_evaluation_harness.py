@@ -11,18 +11,17 @@ from scripts.run_evaluation import (_check_crop, _full_images, _select_cube, _re
 
 
 class HarnessTests(unittest.TestCase):
-    def test_last_reference_is_time_reversal_after_frame_selection(self):
+    def test_frame_selection_keeps_time_order(self):
         cube = np.arange(6, dtype=np.uint8).reshape(6, 1, 1, 1)
-        selected = _select_cube(cube, frames=4, reference='last')
-        np.testing.assert_array_equal(selected[:, 0, 0, 0], [3, 2, 1, 0])
-        np.testing.assert_array_equal(cube[:, 0, 0, 0], np.arange(6))
+        selected = _select_cube(cube, frames=4)
+        np.testing.assert_array_equal(selected[:, 0, 0, 0], [0, 1, 2, 3])
 
     def test_crop_applies_to_cube(self):
         cube = np.arange(4 * 8 * 16 * 3, dtype=np.int32).reshape(4, 8, 16, 3)
         selected = _select_cube(cube, frames=3, crop=(2, 6, 8, 16))
         np.testing.assert_array_equal(selected, cube[:3, 2:6, 8:16])
 
-    def test_full_burst_reverses_before_reconstruction(self):
+    def test_full_burst_is_not_reversed(self):
         cube = np.arange(5, dtype=np.uint8)[:, None, None, None]
         cube = np.broadcast_to(cube, (5, 8, 8, 3)).copy()
         gt = np.zeros((8, 8, 3), dtype=np.float32)
@@ -30,20 +29,23 @@ class HarnessTests(unittest.TestCase):
               patch('scripts.run_evaluation.load_gt', return_value=gt),
               patch('scripts.run_evaluation._reconstruct', return_value={'naive': gt}) as recon):
             out_gt, _, count = _full_images('unused', 10, 64, [], 5, None, 'last')
-        np.testing.assert_array_equal(recon.call_args.args[0][0], 4)
-        np.testing.assert_array_equal(recon.call_args.args[0][-1], 0)
+        np.testing.assert_array_equal(recon.call_args.args[0][0], 0)
+        np.testing.assert_array_equal(recon.call_args.args[0][-1], 4)
+        self.assertEqual(recon.call_args.args[3], 'last')
         self.assertEqual(count, 5)
         np.testing.assert_array_equal(out_gt, gt)
 
     def test_report_table_five_variants(self):
         from src.taa import TAAResult
         cube = np.random.default_rng(7).integers(0, 2, (4, 8, 16, 3), dtype=np.uint8)
-        with (patch('scripts.run_evaluation.aligned_average', side_effect=lambda c, g: (c[0].astype(np.float32), None)) as align,
-              patch('scripts.run_evaluation.reconstruct_taa', side_effect=lambda c, g, config: TAAResult(c[0].astype(np.float32), None, None, None, None)) as taa):
+        with (patch('scripts.run_evaluation.aligned_average',
+                    side_effect=lambda c, g, reference: (c[0 if reference == 'first' else -1].astype(np.float32), None)) as align,
+              patch('scripts.run_evaluation.reconstruct_taa',
+                    side_effect=lambda c, g, config, reference: TAAResult(c[-1].astype(np.float32), None, None, None, None)) as taa):
             results = _reconstruct(cube, 2, [], report_table=True)
         self.assertEqual(set(results), {'naive', 'aligned_first', 'aligned_last', 'clamp_only_last', 'taa_last'})
-        self.assertEqual(align.call_count, 2)
-        self.assertEqual(taa.call_count, 2)
+        self.assertEqual([c.kwargs['reference'] for c in align.call_args_list], ['first', 'last'])
+        self.assertEqual([c.kwargs['reference'] for c in taa.call_args_list], ['last', 'last'])
         np.testing.assert_array_equal(results['aligned_first'], cube[0])
         np.testing.assert_array_equal(results['aligned_last'], cube[-1])
         self.assertFalse(taa.call_args_list[0].args[2].adaptive)
