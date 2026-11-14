@@ -1,17 +1,27 @@
 {
-  "source_type": "samples",
-  "scene_dir": null,
-  "bursts": null,
-  "crop_y0_y1_x0_x1": null,
-  "frame_selection": "all available frames, original time order",
-  "frames_requested": null,
+  "source_type": "full_bursts",
+  "scene_dir": "Z:\\UW-Madison\\cs566-single-photon\\train\\kitchen1",
+  "bursts": [
+    0,
+    1,
+    10
+  ],
+  "crop_y0_y1_x0_x1": [
+    250,
+    550,
+    248,
+    552
+  ],
+  "frame_selection": "first N frames, original time order",
+  "frames_requested": 1024,
   "frames_used": {
-    "kitchen1_000000": 256,
-    "kitchen1_000001": 256
+    "kitchen1_000000": 1024,
+    "kitchen1_000001": 1024,
+    "kitchen1_000010": 1024
   },
   "group_size": 64,
-  "reference_group": "first",
-  "report_table_variants": false,
+  "reference_group": "mixed first/last as in Table 1",
+  "report_table_variants": true,
   "reference_implementation": "reference= argument of aligned_average and reconstruct_taa; frames are never reversed",
   "intensity_rule": "clip(gain * reconstruction, 0, 1)",
   "intensity_policy": "fixed gain for all methods/scenes; no per-image or GT-fitted gains",
@@ -21,8 +31,9 @@
   "metric_protocol": "per-RGB-channel PSNR/SSIM and arithmetic channel means; SSIM 7x7 uniform reflect padded",
   "report_comparability": "Matches report scene/crop/frames/reference when configured; fixed 2.7 gain differs from report least-squares fitting, so PSNR will not exactly match Table 1",
   "inputs": [
-    "data/samples/kitchen1_000000.npz",
-    "data/samples/kitchen1_000001.npz"
+    "Z:\\UW-Madison\\cs566-single-photon\\train\\kitchen1\\000000.npy",
+    "Z:\\UW-Madison\\cs566-single-photon\\train\\kitchen1\\000001.npy",
+    "Z:\\UW-Madison\\cs566-single-photon\\train\\kitchen1\\000010.npy"
   ],
-  "rows": 6
+  "rows": 15
 }
