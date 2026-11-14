@@ -1,0 +1,47 @@
+{
+  "purpose": "issue #26 real-motion illustration; complementary to controlled synthetic disocclusion",
+  "scene": "kitchen1",
+  "burst": 1,
+  "frames": [
+    0,
+    1023
+  ],
+  "source_crop_y0_y1_x0_x1": [
+    250,
+    550,
+    248,
+    552
+  ],
+  "gallery_crop_y0_y1_x0_x1": [
+    336,
+    464,
+    336,
+    464
+  ],
+  "crop_selection": "predetermined central 128x128 crop; not selected by reconstruction scores",
+  "gain": 2.7,
+  "ground_truth": "unchanged",
+  "reference": "last",
+  "group_size": 64,
+  "reference_frames_inclusive": [
+    960,
+    1023
+  ],
+  "last_update_frames_inclusive": [
+    896,
+    959
+  ],
+  "map_meaning": "last-update retained history fraction, invalid observations magenta; not calibrated occlusion probability",
+  "valid_fraction": 1.0,
+  "retention_mean_on_valid": 0.7470111846923828,
+  "source_manifest_sha256": "1ed6407f6b2a4f3683a45ebc7f4280be0cbf5a332eda92ea7f5b03d80fcdcb2d",
+  "source_archive": "kitchen1_000001_reconstructions.npz",
+  "source_archive_sha256": "2813d88b3cfa9a71f1149e38e4c55e20ccb989453ed4d596ba3877da9c5ed2c4",
+  "figure": "kitchen1_000001.png",
+  "figure_sha256": "045e0979436984b77e1444d9e6cc0c283fb619829da54c772f0849b594c3c02d",
+  "source_sha256": {
+    "scripts/render_taa_study_crop.py": "304c5d9f92b10b1a0cbc8e8fea054504e9436f4b6910ed5af450f39da1735bc2",
+    "scripts/make_taa_failure_gallery.py": "a5b5c10b09dc2bc292dcb2a6544214256a19f443508309263842fc30d9cf40fe",
+    "scripts/run_sample_taa.py": "6c48c522be789af36454de9f4396731db28d72e163e014536884cddd9fd9c523"
+  }
+}

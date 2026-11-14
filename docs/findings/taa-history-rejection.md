@@ -1,5 +1,12 @@
 # Track 3: TAA history rejection
 
+For the subsequent fixed-gain sample measurements and the completed full-burst
+comparison, see [the comparison and ablation study](taa-study.md). Independent
+component switches and optional last-group references are documented in
+[component controls](taa-component-controls.md); measured synthetic failure
+cases appear in [the failure gallery](taa-failure-gallery.md). The original
+implementation record below retains its first-reference configuration.
+
 Implements issues #10, #11, and #12 in `src/taa.py`. The implementation adds
 neighborhood history clamping, motion-adaptive blending, and a per-pixel
 history-retention confidence map. The Track 2 alignment and baseline code
@@ -171,7 +178,7 @@ TAA defaults or establishing held-out quality improvement.
 
 ## Limitations and Track 4 handoff
 
-PSNR and SSIM are **not yet run**. These two samples are development inputs,
+At the time of the original run, PSNR and SSIM were **not yet run**. These two samples are development inputs,
 not a held-out benchmark. Visual inspection shows that all photon-domain
 reconstructions are substantially darker than the provided RGB ground truth.
 The intensity-response and reference-time conventions need to be settled with
