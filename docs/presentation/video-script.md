@@ -1,16 +1,16 @@
 # Five-minute presentation: video script (issue #31)
 
-Course limit: 5 minutes per team. This script reads in about 4:45 at a relaxed pace (145 words per minute), which leaves about 15 seconds for pauses and for the visuals to change. Every number comes from `docs/findings/final-results.md` and `docs/findings/synthetic-sweep.md`.
+Course limit: 5 minutes per team. This script reads in about 4:50 at a relaxed pace (145 words per minute), which leaves about 15 seconds for pauses and for the visuals to change. Every number comes from `docs/findings/final-results.md` and `docs/findings/synthetic-sweep.md`.
 
 | Section | Speaker | Words | Read time at 145 wpm | Visual |
 |---|---|---:|---:|---|
 | 1. The problem | Limo | 118 | 0:49 | Slide: one binary photon frame next to a 1,024-frame average; one real burst with visible motion. |
 | 2. Alignment | Ethan | 115 | 0:48 | Slide: group-of-64 diagram; the first-reference versus last-reference comparison. |
-| 3. TAA method | Adrian | 109 | 0:45 | Slide: Figure 1 from the webpage (pipeline diagram). |
+| 3. TAA method | Adrian | 121 | 0:50 | Slide: Figure 1 from the webpage (pipeline diagram). |
 | 4. Results | Jack | 144 | 1:00 | Slide: per-bin table; Figure 2 (comparison grid). |
 | 5. Failure analysis | Limo | 148 | 1:01 | Slide: simulated and rendered sweep table; the motion-bin caveat. |
 | 6. Takeaway | Limo | 54 | 0:22 | Slide: three bullet points; the website address and repository link. |
-| **Total** | | **688** | **4:45** | |
+| **Total** | | **700** | **4:50** | |
 
 Speaker assignments follow the project tracks (alignment: Ethan, TAA: Adrian, evaluation: Jack, data, infrastructure and the failure analysis: Limo). They are a proposal and can be swapped; the text does not depend on who reads it.
 
@@ -43,11 +43,11 @@ The key decision was the reference. The ground truth shows the scene at the end 
 
 So the reference frame mattered more than anything we added on top.
 
-## 3. TAA method (Adrian, about 45 s, 109 words)
+## 3. TAA method (Adrian, about 50 s, 121 words)
 
 *Visual:* Slide: Figure 1 from the webpage (pipeline diagram).
 
-For each new group, TAA warps the running history to match it, then clamps the history to the range of the surrounding three-by-three neighbourhood in the new group, which removes history that disagrees with what we now see.
+For each new group, TAA first aligns it to a fixed reference group, so the new group and the running history share coordinates. It then clamps the history to the range of the surrounding three-by-three neighbourhood in the new group, which removes history that disagrees with what we now see.
 
 It then blends the two with a confidence weight that drops when the neighbourhood disagrees, and when the pixel moved a long way.
 
