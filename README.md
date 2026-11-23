@@ -22,7 +22,19 @@ Gain-matched PSNR (dB) on `kitchen1`, bursts 0 / 1 / 10, 300x304 crop, all 1,024
 
 - The scene moves inside a single burst (about 2 to 20 px), so we align groups of frames, not single binary frames ([docs/findings/burst-motion.md](docs/findings/burst-motion.md)).
 - The ground truth is at the pose of the last frames, so the reference group must be the last one.
-- Our first TAA configuration is worse than plain alignment: displacement-based confidence discards correct frames. Next step is a residual-based confidence.
+- Our first TAA configuration is 1.0 to 3.8 dB worse than plain alignment under the per-image gain above: displacement-based confidence discards correct frames. Next step is a residual-based confidence.
+
+Evaluation-harness results (fixed gain 2.7, same bursts, crop, frames and references, current aligner with sub-pixel refinement). Not comparable with the table above, which fits one gain per image.
+
+| Method | PSNR b0 | b1 | b10 | SSIM b0 | b1 | b10 |
+|---|---|---|---|---|---|---|
+| Naive average | 15.11 | 14.52 | 14.68 | 0.298 | 0.303 | 0.358 |
+| Aligned, first-group reference | 13.94 | 12.40 | 13.43 | 0.248 | 0.218 | 0.293 |
+| Aligned, last-group reference | **16.29** | 16.98 | **15.83** | 0.431 | 0.407 | 0.484 |
+| Clamp only, last-group reference | **16.29** | 17.01 | **15.83** | **0.431** | **0.415** | **0.485** |
+| TAA (default), last-group reference | 16.24 | **17.17** | 15.80 | 0.391 | 0.369 | 0.454 |
+
+- The baseline ordering matches the table above. TAA is within 0.2 dB of last-group alignment in PSNR but 0.03 to 0.04 lower in SSIM. We have not yet isolated whether the gain rule or the improved aligner closes the PSNR gap. Reproduce with the command in [docs/midTerm-evaluation.md](docs/midTerm-evaluation.md).
 
 ## Milestones
 | Milestone | Due | Status |
