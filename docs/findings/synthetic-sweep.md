@@ -38,9 +38,12 @@ PSNR in dB. Plots: `results/motion_analysis/synthetic/psnr_vs_drift.png`, `ssim_
 - TAA is 0.4 to 0.9 dB below plain alignment in PSNR from 0 to 20 px and 0.02 to 0.04 lower in SSIM. At the fastest speed (30 px measured) TAA is 0.8 dB higher in PSNR but still slightly lower in SSIM (0.735 against 0.743), so the PSNR crossover lies between 15 and 30 px.
 - This agrees with the mid-term and PR #44 results on real bursts (TAA matches alignment in PSNR and loses SSIM) and says nothing new about why. It is one image and one seed, with two bursts per bin, so no confidence intervals are reported.
 
-## Rendered sweep with visionsim (in progress, not yet run)
-The numpy simulator is deliberately small. A visionsim sweep adds rendered frames and the real sensor emulation step.
-1. Build the scenes: `blender -b --factory-startup -P scripts/blender/make_pan_scenes.py -- --out data/blender --speeds 0 2 5 10 20 40`. This writes one `.blend` per speed with an emission-only textured plane and a camera that pans by that many pixels over 1024 frames (the last frame is the ground-truth pose). `data/` is not tracked.
-2. Render a short test first: `visionsim blender.render-animation data/blender/pan_v10.blend data/blender/render_v10 --frame-end 8 --config.device-type cpu --config.max-samples 1 --config.no-use-denoising --config.no-previews`, and check what it wrote.
-3. Binary frames: `visionsim emulate.spad --input-dir ... --output-dir ... --factor ...` (Bernoulli sampling of the linear frames). The factor and the conversion into the `data/samples` format are decided after step 2; they are not written yet.
-The scene script has not been run in Blender yet.
+## Rendered sweep with Blender frames (code written, sweep not yet run)
+The numpy simulator translates one image. This sweep instead uses frames rendered by Blender Cycles, so the motion comes from a moving camera rather than from resampling a still image.
+1. Build the scenes: `blender -b --factory-startup -P scripts/blender/make_pan_scenes.py -- --out data/blender --speeds 0 2 5 10 20 40`. One `.blend` per speed: an emission-only noise-texture plane (contrast stretched with a color ramp) under an orthographic camera that pans by that many pixels over 1024 frames. The last frame is the ground-truth pose. `data/` is not tracked.
+2. Render the frames: `blender -b data/blender/pan_v10.blend -P scripts/blender/render_frames.py -- --out data/blender/frames_v10`, once per speed. Output is linear 16-bit grayscale PNG (`Raw` view transform), one per frame. Add `--frame-end 8` for a quick test.
+3. Run the sweep: `python scripts/run_rendered_sweep.py --frames-root data/blender`. Each burst is a seeded Bernoulli draw from the frames divided by the gain 2.7 (`src/rendered.py`), then naive, aligned and TAA are scored as in the real-data runs. Records go to `results/rendered_sweep/` and are read by `scripts/analyze_motion_bins.py` as source "rendered".
+
+Why not visionsim's renderer: on this setup (visionsim 0.2.0, Blender 5.3) `visionsim blender.render-animation` rendered the first frame and then disconnected without an error, exit code 0. Direct Blender rendering of the same scene works, so the frames are rendered that way. `visionsim emulate.spad` is not used either; the Bernoulli step is the same one as in the numpy sweep, so the two sweeps differ only in where the frames come from.
+
+Not modelled, as in the numpy sweep: any noise but photon shot noise, rolling shutter, disocclusion and parallax (the scene is a flat plane panned by the camera). Cycles runs at 1 sample per pixel, so frames carry small pixel-filter noise; the ground truth is the last frame and has it too.
