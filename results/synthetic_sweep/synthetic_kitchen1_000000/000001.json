@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "source": "synthetic",
+  "scene": "synthetic_kitchen1_000000",
+  "burst": 1,
+  "config_key": "6fa1176642f056e5",
+  "frames": 1024,
+  "crop": null,
+  "group_size": 64,
+  "reference": "last",
+  "gain": 2.7,
+  "motion": {
+    "window": 256,
+    "windows": 4,
+    "dy": 0.0,
+    "dx": -1.7,
+    "drift_px": 1.7,
+    "speed_px_per_256": 0.57,
+    "path_px": 1.7,
+    "min_peak": 0.43,
+    "reliable": true
+  },
+  "scores": {
+    "naive": {
+      "psnr_r": 24.071719708278522,
+      "psnr_g": 24.217936464305595,
+      "psnr_b": 25.726590815531644,
+      "psnr_mean": 24.67208232937192,
+      "ssim_r": 0.7986783981323113,
+      "ssim_g": 0.8155069520392755,
+      "ssim_b": 0.8235965175578237,
+      "ssim_mean": 0.8125939559098034
+    },
+    "aligned": {
+      "psnr_r": 31.85125916842459,
+      "psnr_g": 32.06369571813633,
+      "psnr_b": 32.878537928466805,
+      "psnr_mean": 32.26449760500924,
+      "ssim_r": 0.9027526989839849,
+      "ssim_g": 0.9171987945065017,
+      "ssim_b": 0.9202955258876284,
+      "ssim_mean": 0.9134156731260384
+    },
+    "taa": {
+      "psnr_r": 31.250424425213478,
+      "psnr_g": 31.457361573558586,
+      "psnr_b": 32.323222213001436,
+      "psnr_mean": 31.677002737257833,
+      "ssim_r": 0.8788033898223756,
+      "ssim_g": 0.8963575117920757,
+      "ssim_b": 0.9006411726349343,
+      "ssim_mean": 0.8919340247497951
+    }
+  },
+  "seconds": 8.8,
+  "nominal_drift_px": 2,
+  "angle_deg": 0.0,
+  "seed": 566,
+  "simulator": "src/synthetic.py (numpy)"
+}
