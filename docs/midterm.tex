@@ -64,7 +64,7 @@
   \begin{minipage}{0.94\textwidth}
   \small\noindent\textbf{Abstract}\par\vspace{0.1em}
   \itshape
-  We investigate whether history-validation heuristics from temporal anti-aliasing (TAA), namely neighborhood clamping and motion-adaptive blending, can improve classical align-and-merge reconstruction of single-photon bursts. All stages of our pipeline now run on real Single Photon Challenge data, including an evaluation harness that reports PSNR and SSIM. Two early findings shape the rest of the project. First, the scene moves substantially \emph{inside} a single burst. Second, the ground truth is at the pose of the \emph{last} frames, so the choice of reference frame decides whether alignment helps at all. With the correct reference, block alignment improves on naive averaging by 2.5 to 4.4~dB PSNR on the bursts we tested, while our first TAA configuration is 1 to 4~dB worse than alignment alone. We report these results, the difficulties behind them, and the changes they imply for our plan.
+  We investigate whether history-validation heuristics from temporal anti-aliasing (TAA), namely neighborhood clamping and motion-adaptive blending, can improve classical align-and-merge reconstruction of single-photon bursts. All stages of our pipeline now run on real Single Photon Challenge data, including an evaluation harness that reports PSNR and SSIM. Two early findings shape the rest of the project. First, the scene moves substantially \emph{inside} a single burst. Second, the ground truth is at the pose of the \emph{last} frames, so the choice of reference frame decides whether alignment helps at all. With the correct reference, block alignment improves on naive averaging by 2.5 to 4.4~dB PSNR on the bursts we tested, while our first TAA configuration is 1 to 4~dB worse than alignment alone under a per-image gain. Under the fixed-gain evaluation harness, TAA matches alignment in PSNR within 0.2~dB but scores about 0.04 lower in SSIM. We report these results, the difficulties behind them, and the changes they imply for our plan.
   \end{minipage}
   \end{center}
   \vspace{0.2em}
@@ -116,7 +116,7 @@ The dataset stores each burst as 1{,}024 binary frames of $800\times800$ RGB, bi
 
 \subsection{Alignment}
 
-Each group $g$ is averaged into a frame $\bar{x}_g$. The aligner estimates a motion field by coarse-to-fine $8\times8$ block matching on a three-level pyramid and warps $\bar{x}_g$ to the reference, leaving invalid pixels undefined outside the source. The same aligner is used by every method, so differences between methods are attributable to the merge stage.
+Each group $g$ is averaged into a frame $\bar{x}_g$. The aligner estimates a motion field by coarse-to-fine $8\times8$ block matching on a three-level pyramid and warps $\bar{x}_g$ to the reference. Every method uses the same aligner, so differences between methods come from the merge stage.
 
 \subsection{History validation}
 
@@ -132,7 +132,7 @@ Pixels with no valid observation keep their history and weight unchanged. Compon
 
 \subsection{Evaluation}
 
-The evaluation module provides an \texttt{evaluate} function that returns the mean per-channel PSNR and SSIM (7$\times$7 uniform window, reflect padding). A harness runs naive averaging, aligned averaging and TAA on a set of bursts, accepts additional pipelines as plug-ins, and writes a results table and comparison figures. It applies one fixed intensity rule to every method, $\mathrm{clip}(2.7\,x,0,1)$, where the gain of 2.7 is a placeholder that is not calibrated to the camera response. The full suite of 48 unit tests passes.
+The evaluation module provides an \texttt{evaluate} function that returns the mean per-channel PSNR and SSIM (7$\times$7 uniform window, reflect padding). A harness runs naive averaging, aligned averaging and TAA on a set of bursts, accepts additional pipelines as plug-ins, and writes a results table and comparison figures. A report-table mode reproduces the five variants of Table~\ref{tab:psnr} with the same scene, crop, frame count and reference groups, using the reference option of the aligner rather than reversing the burst. It applies one fixed intensity rule to every method, $\mathrm{clip}(2.7\,x,0,1)$, where the gain of 2.7 is a placeholder that is not calibrated to the camera response. All 90 unit tests pass.
 
 \section{Current Results}
 \label{sec:results}
@@ -143,7 +143,7 @@ Table~\ref{tab:psnr} uses scene \texttt{kitchen1}, bursts 0, 1 and 10, a $300\ti
 \begin{equation}
   g^\star = \frac{\langle \hat{y}, y\rangle}{\langle \hat{y}, \hat{y}\rangle}.
 \end{equation}
-This differs from the harness, which uses the fixed gain above, and the two rules are not yet unified (\sref{sec:difficulties}). The results come from one scene and no held-out data, so they are indicative, not a benchmark.
+Table~\ref{tab:harness} reports the same runs under the harness's fixed gain instead, and the two rules are not yet unified (\sref{sec:difficulties}). The results come from one scene and no held-out data, so they are indicative, not a benchmark.
 
 \subsection{Motion inside a burst}
 
@@ -174,23 +174,25 @@ TAA (default), last-group ref. & 17.3 & 15.3 & 18.3 \\
 
 \subsection{Evaluation harness}
 
-Table~\ref{tab:harness} shows the harness output on the two committed samples, which use 256 frames and a $128\times128$ crop, the fixed gain of 2.7, and the first-group reference. Aligned averaging and TAA do not beat naive averaging here on either metric, and TAA is essentially equal to alignment in PSNR and slightly lower in SSIM. This agrees with the first-group result in Table~\ref{tab:psnr}. The absolute values are low (PSNR below 12~dB, SSIM below 0.16) because the fixed gain and the pose offset both penalize every method. These numbers are not comparable with Table~\ref{tab:psnr}: the crop, the number of frames, the reference group and the intensity rule all differ.
+Table~\ref{tab:harness} gives the harness output for the same bursts, crop, frames and references as Table~\ref{tab:psnr}, with the fixed gain of 2.7 for every method and the current aligner (which adds sub-pixel refinement). The baselines keep their order: last-group alignment beats naive averaging by 1.6~dB (0.12 SSIM) on average and the first-group reference is 1.5~dB worse. The clamp is within 0.04~dB of plain alignment. TAA now differs from Table~\ref{tab:psnr}: its PSNR is within 0.2~dB of last-group alignment on all bursts, but its SSIM is 0.03 to 0.04 lower. We have not yet isolated whether the gain rule or the improved aligner causes this change, which is the first item of our next steps. Aligned PSNR is 2 to 3.5~dB below Table~\ref{tab:psnr} because one gain is not matched to each image.
 
 \begin{table}[t]
 \centering
-\small
-\begin{tabular}{@{}lcccc@{}}
+\footnotesize
+\setlength{\tabcolsep}{2.6pt}
+\begin{tabular}{@{}p{0.25\columnwidth}ccc@{\hspace{8pt}}ccc@{}}
 \toprule
- & \multicolumn{2}{c}{\textbf{Burst 0}} & \multicolumn{2}{c}{\textbf{Burst 1}} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}
- & PSNR & SSIM & PSNR & SSIM \\
+ & \multicolumn{3}{c}{\textbf{PSNR (dB)}} & \multicolumn{3}{c}{\textbf{SSIM}} \\
+ & b0 & b1 & b10 & b0 & b1 & b10 \\
 \midrule
-Naive average & 11.93 & 0.159 & 9.78 & 0.140 \\
-Aligned (first ref.) & 11.86 & 0.150 & 9.52 & 0.134 \\
-TAA (first ref.) & 11.86 & 0.148 & 9.52 & 0.128 \\
+Naive & 15.11 & 14.52 & 14.68 & 0.298 & 0.303 & 0.358 \\
+Aligned, first & 13.94 & 12.40 & 13.43 & 0.248 & 0.218 & 0.293 \\
+Aligned, last & \textbf{16.29} & 16.98 & \textbf{15.83} & 0.431 & 0.407 & 0.484 \\
+Clamp, last & \textbf{16.29} & 17.01 & \textbf{15.83} & \textbf{0.431} & \textbf{0.415} & \textbf{0.485} \\
+TAA, last & 16.24 & \textbf{17.17} & 15.80 & 0.391 & 0.369 & 0.454 \\
 \bottomrule
 \end{tabular}
-\caption{Harness output on the committed samples (256 frames, $128\times128$ crop, fixed gain 2.7, first-group reference). PSNR in dB.}
+\caption{Harness output on \texttt{kitchen1}, bursts 0, 1 and 10 (300$\times$304 crop, 1{,}024 frames, groups of 64, fixed gain 2.7). Last-group results use the aligner's reference option.}
 \label{tab:harness}
 \end{table}
 
@@ -198,10 +200,10 @@ TAA (first ref.) & 11.86 & 0.148 & 9.52 & 0.128 \\
 \label{sec:difficulties}
 
 \paragraph{Reference frame.}
-The ground-truth pose is the end of the burst. A fixed first-group reference, the natural default, makes alignment look harmful. We found this only after comparing against the ground truth at several time offsets.
+The ground-truth pose is the end of the burst. A fixed first-group reference, the natural default, makes alignment look harmful.
 
 \paragraph{Intensity mismatch.}
-Photon averages and the ground-truth image differ in brightness response, so raw PSNR is misleading. We currently use two rules: a per-image least-squares gain for Table~\ref{tab:psnr} and a fixed gain of 2.7 in the harness. One rule must be applied to every method and scene, and this decision is still open.
+Photon averages and the ground-truth image differ in brightness response, so raw PSNR is misleading. We currently use two rules: a per-image least-squares gain for Table~\ref{tab:psnr} and a fixed gain of 2.7 in the harness (Table~\ref{tab:harness}). One rule must be applied to every method and scene, and this decision is still open.
 
 \paragraph{Noise versus motion.}
 Single binary frames cannot be aligned, so we align 64-frame groups. Photon noise in flat regions still produces apparent motion, which makes displacement an unreliable proxy for alignment error.
@@ -209,25 +211,22 @@ Single binary frames cannot be aligned, so we align 64-frame groups. Photon nois
 \paragraph{TAA tuning.}
 Our confidence term lowers the history weight with displacement. Once alignment has compensated for the motion, this discards correct frames and raises noise.
 
-\paragraph{Data format and memory.}
-Bursts are bit-packed and a full cube unpacks to about 2~GB, so we load by frame and crop and the team works from samples and a shared slice.
-
 \section{Changes to the Proposal}
 \label{sec:changes}
 
 \begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=3pt]
   \item \textbf{Alignment unit.} Alignment runs within a burst, on groups of frames, with the last group as reference.
   \item \textbf{Motion sweeps.} Real bursts already span roughly 2 to 20~px of motion, so the \texttt{visionsim} sweeps become optional and the motion study uses real bursts binned by measured speed.
-  \item \textbf{Data size.} The average archive is about 2.7~GB (133~GB compressed in total), not 8.5~GB as proposed. We use a 10-scene shared slice and run final experiments on the full set.
+  \item \textbf{Data size.} Archives average 2.7~GB, not 8.5~GB as proposed, so we use a 10-scene shared slice and run final experiments on the full set.
   \item \textbf{Hypothesis.} The initial TAA result is negative: when alignment is accurate, displacement-based rejection hurts. We now plan a confidence based on alignment residual, and we will report the failure analysis either way.
 \end{itemize}
 
 \section{Next Steps}
 \label{sec:next}
 
-We will unify the intensity rule, switch the baselines and TAA to the last-group reference, and rerun the harness on full bursts and a motion-binned scene set. We will replace the displacement term with a residual-based confidence and run ablations (clamp, blend, confidence) together with a failure analysis against motion speed. Experiments freeze on Nov.~30. The final presentation is on Dec.~8 and the project webpage is due Dec.~10.
+The harness already reproduces the last-group variants on full bursts. We will first unify the intensity rule and isolate whether the gain rule or the new aligner explains the smaller TAA gap, then rerun the harness on a motion-binned scene set. We will replace the displacement term with a residual-based confidence and run ablations (clamp, blend, confidence) together with a failure analysis against motion speed. Experiments freeze on Nov.~30. The final presentation is on Dec.~8 and the project webpage is due Dec.~10.
 
-\begin{thebibliography}{9}\small
+\begin{thebibliography}{9}\footnotesize\setlength{\itemsep}{0pt}
 \bibitem{yang2020survey} L.~Yang, S.~Liu, M.~Salvi. A survey of temporal antialiasing techniques. \emph{Computer Graphics Forum}, 39(2), 2020.
 \bibitem{yang2009amortized} L.~Yang, D.~Nehab, P.~V.~Sander, P.~Sitthi-amorn, J.~Lawrence, H.~Hoppe. Amortized supersampling. \emph{ACM Trans.\ Graphics}, 28(5), 2009.
 \bibitem{karis2014} B.~Karis. High-quality temporal supersampling. SIGGRAPH Advances in Real-Time Rendering course, 2014.

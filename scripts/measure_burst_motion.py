@@ -1,36 +1,17 @@
 """Estimate global translation between 256-frame windows inside one photon cube.
 
 Usage:
-  python scripts/measure_burst_motion.py "Z:/.../train/kitchen1" 0 1 10
+  python scripts/measure_burst_motion.py path/to/train/kitchen1 0 1 10
 (scene dir, then one or more burst indices). Prints, per burst, the shift of each
 later window relative to the first one, as (dy, dx, peak) in pixels, plus the
 window-to-window shift. A low peak (< ~0.05) means the estimate is unreliable.
+For a whole-dataset table and slow/medium/fast bins use scripts/bin_scenes_by_motion.py.
 """
 import os, sys
 import numpy as np
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from burst_io import load_burst
-
-CROP = (150, 650, 152, 648)   # central region; x bounds must be multiples of 8
-WIN = 256
-
-
-def phase_corr(a, b):
-    a = a - a.mean(); b = b - b.mean()
-    w = np.outer(np.hanning(a.shape[0]), np.hanning(a.shape[1]))
-    F = np.fft.fft2(a * w) * np.conj(np.fft.fft2(b * w))
-    F /= np.abs(F) + 1e-9
-    r = np.fft.ifft2(F).real
-    y, x = np.unravel_index(r.argmax(), r.shape)
-    h, wd = r.shape
-
-    def refine(l, c, rr):
-        d = l - 2 * c + rr
-        return 0.0 if d == 0 else 0.5 * (l - rr) / d
-
-    dy = (y - h if y > h // 2 else y) + refine(r[(y - 1) % h, x], r[y, x], r[(y + 1) % h, x])
-    dx = (x - wd if x > wd // 2 else x) + refine(r[y, (x - 1) % wd], r[y, x], r[y, (x + 1) % wd])
-    return round(float(dy), 1), round(float(dx), 1), round(float(r.max()), 2)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from src.burst_io import load_burst
+from src.motion import REAL_CROP as CROP, WINDOW as WIN, phase_corr
 
 
 def main():
