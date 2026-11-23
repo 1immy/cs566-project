@@ -38,5 +38,9 @@ PSNR in dB. Plots: `results/motion_analysis/synthetic/psnr_vs_drift.png`, `ssim_
 - TAA is 0.4 to 0.9 dB below plain alignment in PSNR from 0 to 20 px and 0.02 to 0.04 lower in SSIM. At the fastest speed (30 px measured) TAA is 0.8 dB higher in PSNR but still slightly lower in SSIM (0.735 against 0.743), so the PSNR crossover lies between 15 and 30 px.
 - This agrees with the mid-term and PR #44 results on real bursts (TAA matches alignment in PSNR and loses SSIM) and says nothing new about why. It is one image and one seed, with two bursts per bin, so no confidence intervals are reported.
 
-## If visionsim is installed
-The simulator is deliberately small. A visionsim-rendered sweep would add rendered motion, parallax and disocclusion. Any such burst can be scored by writing it in the `data/samples` format (`packed`, `width`) and running `scripts/run_evaluation.py --samples`, or by adding a runner that emits the record format in `src/motion_study.py`.
+## Rendered sweep with visionsim (in progress, not yet run)
+The numpy simulator is deliberately small. A visionsim sweep adds rendered frames and the real sensor emulation step.
+1. Build the scenes: `blender -b --factory-startup -P scripts/blender/make_pan_scenes.py -- --out data/blender --speeds 0 2 5 10 20 40`. This writes one `.blend` per speed with an emission-only textured plane and a camera that pans by that many pixels over 1024 frames (the last frame is the ground-truth pose). `data/` is not tracked.
+2. Render a short test first: `visionsim blender.render-animation data/blender/pan_v10.blend data/blender/render_v10 --frame-end 8 --config.device-type cpu --config.max-samples 1 --config.no-use-denoising --config.no-previews`, and check what it wrote.
+3. Binary frames: `visionsim emulate.spad --input-dir ... --output-dir ... --factor ...` (Bernoulli sampling of the linear frames). The factor and the conversion into the `data/samples` format are decided after step 2; they are not written yet.
+The scene script has not been run in Blender yet.
