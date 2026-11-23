@@ -24,6 +24,8 @@
 <li class="rail-group">Updates</li>
 <li><a href="#midterm"><i></i><b>Mid-term</b> <span>Oct 29</span></a></li>
 <li class="rail-group">Final <span>Nov 23</span></li>
+<li><a href="#final-data"><i></i><b>Data and alignment</b></a></li>
+<li><a href="#final-method"><i></i><b>Method</b></a></li>
 <li><a href="#results"><i></i><b>Final results</b></a></li>
 <li><a href="#discussion"><i></i><b>Discussion</b></a></li>
 <li><a href="#presentation"><i></i><b>Presentation</b></a></li>
@@ -246,6 +248,54 @@
 <hr class="section-divider">
 
 <p class="updates-label">Final Report</p>
+
+<section id="final-data">
+<h2>Data and Alignment <span class="date">(Nov 23, 2026)</span></h2>
+<p>This section describes what we actually used, which differs from the proposal in a few places (noted at the end).</p>
+<h3>Data</h3>
+<p>The Single Photon Challenge dataset stores each burst as a photon cube of 1,024 binary frames, 800&times;800 pixels, three colour channels, bit-packed along the width. The training scenes come with a ground-truth image; the five test scenes do not, so every number we report comes from training scenes. We measured the motion inside 100 bursts (bursts 0 and 1 of the 50 training scenes) and reconstructed 31 of them at full resolution (see Final Results). We also used one scene, <code>kitchen1</code>, for development, and two controlled sweeps with known motion: a numpy simulator and a Blender-rendered pan, each at global shifts from 0 to 40&nbsp;px over the burst.</p>
+<p>Two properties of the data shaped the protocol. First, the mean photon rate is about 0.157, so a single frame is far too noisy to align on its own; we align averages of 64-frame groups. Second, the ground truth is the scene at the <em>end</em> of the burst, so every method uses the last group as its reference. Aligning to the first group puts the result in the wrong pose and scored 1.5&nbsp;dB worse than the last-group reference on <code>kitchen1</code>.</p>
+<h3>Motion inside a burst</h3>
+<p>Scenes move during a burst, so alignment has to happen inside the burst, not just between bursts. We estimate the drift by phase correlation between averages of 256-frame windows (a global translation). Drift is mostly horizontal and varies a lot from burst to burst. The estimate is weak for most bursts: 80 of the 100 measured have a low correlation peak, so for them the measured drift indicates how much the scene moved, not a precise speed.</p>
+<h3>Alignment</h3>
+<p>All three methods (naive averaging, aligned averaging and TAA) share one aligner, so differences between them come only from how groups are merged.</p>
+<ul>
+<li><strong>Groups.</strong> The burst is split into consecutive groups of 64 frames. The group average is the unit that gets aligned.</li>
+<li><strong>Block matching.</strong> Each group is aligned to the reference group image with 8&times;8 blocks, coarse to fine over at most three pyramid levels. The coarse search radius is 4&nbsp;px at the coarsest level and 2&nbsp;px around the propagated estimate at finer levels. Matching minimises mean squared error on the channel average, and requires at least half of a block to overlap.</li>
+<li><strong>Small motion.</strong> At the finest level we also search within 2&nbsp;px of zero, so a misleading coarse estimate does not hide a small motion.</li>
+<li><strong>Sub-pixel refinement.</strong> Each integer match is refined with 3&times;3 searches at 0.5, 0.25 and 0.125&nbsp;px, accepted only if it lowers the error. The image is then resampled bilinearly. Pixels with no source are marked invalid and contribute nothing.</li>
+<li><strong>Merging.</strong> Aligned averaging seeds the result with the reference group and adds the other groups weighted by their frame counts.</li>
+</ul>
+<h3>Limits of the alignment</h3>
+<ul>
+<li><strong>Motion is constant within each block</strong> and within a group. There is no model for parallax, disocclusion or motion during the 64 frames of a group.</li>
+<li><strong>Search reach is about 22&nbsp;px per axis.</strong> In a simulator check on a 128&times;128 image, widening the coarse search to reach about 38&nbsp;px changed nothing at 10 and 20&nbsp;px of motion and improved aligned PSNR by about 1&nbsp;dB at 40&nbsp;px. We kept the shipped setting for all results; the limit is small but real at the fast end.</li>
+<li><strong>The ground truth is the end-of-burst pose,</strong> so reconstructions are scored against one instant, not the average over the burst.</li>
+</ul>
+<h3>Changes from the proposal</h3>
+<p>The proposal planned a 10-scene shared subset; the final study uses 31 bursts from 29 scenes, selected by measured motion. The mid-term used a per-image gain; the final results use one fixed gain of 2.7 for every method and scene. Alignment moved from integer displacements to sub-pixel refinement, and every group is aligned to a fixed reference group.</p>
+<p class="pdf-link"><a href="https://github.com/1immy/cs566-project/blob/main/docs/findings/alignment-baseline.md">Alignment baseline (repository)</a> &middot; <a href="https://github.com/1immy/cs566-project/blob/main/docs/findings/burst-motion.md">Burst motion (repository)</a></p>
+</section>
+
+<section id="final-method">
+<h2>Method <span class="date">(Nov 23, 2026)</span></h2>
+<p>Figure 1 above shows the pipeline. This section gives the final form of the method as implemented. Aligned averaging is the control: it uses the same groups, aligner, reference and cube as TAA, and TAA with both history-rejection ingredients turned off reproduces it.</p>
+<h3>Per group</h3>
+<ol>
+<li>Take the next group of 64 frames and average it.</li>
+<li>Align that group to the fixed reference group image, so the new group and the running history share coordinates. The aligner also returns the motion (dy, dx) of every block.</li>
+<li>Clamp the history to the neighbourhood of the new group: for each pixel and channel, the history is limited to the minimum and maximum of the surrounding 3&times;3 pixels of the warped group, widened by 0.05.</li>
+<li>Compute a per-pixel retention confidence and blend: the more the history disagrees with the new group, or the further the pixel moved, the less weight the history keeps.</li>
+</ol>
+<p>The history starts as the reference group. The retention confidence is <code>c = exp(&minus;d/0.1) / (1 + |motion|/8)</code>, where <code>d</code> is how far the history lies outside the clamp bounds and <code>|motion|</code> is the displacement in pixels. Pixels with invalid warps keep their history and weight unchanged.</p>
+<h3>Parameters</h3>
+<p>Neighbourhood radius 1, clamp margin 0.05, rejection scale 0.1, motion scale 8&nbsp;px. Clamping and the adaptive blend can be switched off independently, which is how we ran the component controls on <code>kitchen1</code>.</p>
+<h3>What is not implemented</h3>
+<p>The motion term uses displacement as a proxy for unreliability. A confidence from the match residual of each block was designed and is available in the aligner, but is not part of the evaluated TAA. We do not test it here.</p>
+<h3>Evaluation</h3>
+<p>Reconstructions are scaled by one fixed gain of 2.7, clipped to [0,1], and scored against the ground truth by PSNR and SSIM. Intervals are bootstrap 95% intervals over bursts (seeded), and paired comparisons use an exact two-sided sign test. Details and results are in Final Results.</p>
+<p class="pdf-link"><a href="https://github.com/1immy/cs566-project/blob/main/docs/findings/taa-history-rejection.md">TAA history rejection (repository)</a> &middot; <a href="https://github.com/1immy/cs566-project/blob/main/docs/findings/taa-component-controls.md">Component controls (repository)</a></p>
+</section>
 
 <section id="results">
 <h2>Final Results <span class="date">(Nov 23, 2026)</span></h2>
