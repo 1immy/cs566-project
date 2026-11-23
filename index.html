@@ -23,7 +23,8 @@
 <li><a href="#timeline"><i></i><b>Timeline</b></a></li>
 <li class="rail-group">Updates</li>
 <li><a href="#midterm"><i></i><b>Mid-term</b> <span>Oct 29</span></a></li>
-<li><a href="#results"><i></i><b>Results</b></a></li>
+<li class="rail-group">Final <span>Nov 23</span></li>
+<li><a href="#results"><i></i><b>Final results</b></a></li>
 <li><a href="#discussion"><i></i><b>Discussion</b></a></li>
 <li><a href="#presentation"><i></i><b>Presentation</b></a></li>
 <li><a href="#code"><i></i><b>Code</b></a></li>
@@ -37,7 +38,7 @@
       <p class="authors">Adrian Gottwein &middot; Limo Kemei &middot; Jack Chen &middot; Ethan Shao</p>
       <p class="author-emails">NetIDs: gottwein &middot; kkemei &middot; zchen843 &middot; zshao46</p>
       <p class="affiliation">University of Wisconsin&ndash;Madison</p>
-      <p class="course-line">CS 566: Introduction to Computer Vision, Course Project<br>Proposal submitted September 29, 2026 &middot; Mid-term report submitted October 29, 2026</p>
+      <p class="course-line">CS 566: Introduction to Computer Vision, Course Project<br>Proposal submitted September 29, 2026 &middot; Mid-term report submitted October 29, 2026 &middot; Final results added November 23, 2026</p>
 
       <div class="abstract">
         <h2 class="abstract-label">Abstract</h2>
@@ -195,7 +196,7 @@
 
         <section id="midterm">
 <h2>Mid-Term Report <span class="date">(Oct 29, 2026)</span></h2>
-<p>Both pipeline stages now run on real Single Photon Challenge data, and an evaluation harness reports PSNR and SSIM. Two early findings shape the rest of the project: the scene moves inside a single burst, and the ground truth is at the pose of the last frames. The numbers are in the Results section below.</p>
+<p>Both pipeline stages now run on real Single Photon Challenge data, and an evaluation harness reports PSNR and SSIM. Two early findings shape the rest of the project: the scene moves inside a single burst, and the ground truth is at the pose of the last frames. The mid-term table is at the end of this section; the final results are in the dated Final Results section below.</p>
 <p class="pdf-link"><a href="midterm-report.pdf">Download the mid-term report (PDF)</a></p>
 
 <h3>Progress</h3>
@@ -211,7 +212,7 @@
 <h3>Difficulties</h3>
 <ul>
 <li><strong>Reference frame.</strong> A fixed first-group reference, the natural default, makes alignment look harmful. We found this only after comparing against the ground truth at several time offsets.</li>
-<li><strong>Intensity mismatch.</strong> The ground truth is much brighter than the photon average. We currently use two rules, a per-image gain for the first table and a fixed gain of 2.7 in the harness (second table), and one rule has to be chosen and applied everywhere.</li>
+<li><strong>Intensity mismatch.</strong> The ground truth is much brighter than the photon average. We currently use two rules, a per-image gain for the first table and a fixed gain of 2.7 in the harness (the <code>kitchen1</code> table under Final Results), and one rule has to be chosen and applied everywhere.</li>
 <li><strong>Noise versus motion.</strong> Single binary frames cannot be aligned, and photon noise in flat regions produces apparent motion, which makes displacement an unreliable proxy for alignment error.</li>
 <li><strong>TAA tuning.</strong> Once alignment has compensated for the motion, the displacement term in our confidence discards correct frames and raises noise.</li>
 </ul>
@@ -226,9 +227,29 @@
 
 <h3>Next steps</h3>
 <p>The harness already reproduces the last-group variants on full bursts. Next we unify the intensity rule, isolate whether the gain rule or the improved aligner explains the smaller TAA gap, and rerun on a motion-binned scene set. Replace the displacement term with a residual-based confidence, run ablations (clamp, blend, confidence) and a failure analysis against motion speed. Experiments freeze on Nov&nbsp;30.</p>
+
+<h3>Results at the mid-term</h3>
+<p>Scene <code>kitchen1</code>, bursts 0, 1 and 10, a 300&times;304 central crop, all 1,024 frames, groups of 64. Each reconstruction was multiplied by one least-squares gain before PSNR, because the ground truth is much brighter than the photon average. That rule was preliminary, and the results come from one scene with no held-out data, so they were indicative, not a benchmark. They are superseded by the fixed-gain results under Final Results below, which use a different intensity rule and are not comparable with this table. PSNR in dB.</p>
+<table class="results-table">
+<thead>
+<tr><th>PSNR (dB)</th><th>Burst 0</th><th>Burst 1</th><th>Burst 10</th></tr>
+</thead>
+<tbody>
+<tr><td>Naive average</td><td>16.2</td><td>14.7</td><td>16.8</td></tr>
+<tr><td>Aligned, first-group reference</td><td>14.0</td><td>12.5</td><td>13.9</td></tr>
+<tr><td>Aligned, last-group reference</td><td><strong>19.7</strong></td><td><strong>19.1</strong></td><td><strong>19.3</strong></td></tr>
+<tr><td>Clamp only, last-group reference</td><td>19.7</td><td>18.5</td><td>19.3</td></tr>
+<tr><td>TAA (default), last-group reference</td><td>17.3</td><td>15.3</td><td>18.3</td></tr>
+</tbody>
+</table>
 </section>
+<hr class="section-divider">
+
+<p class="updates-label">Final Report</p>
+
 <section id="results">
-<h2>Results</h2>
+<h2>Final Results <span class="date">(Nov 23, 2026)</span></h2>
+<p>These are the final results. They replace the preliminary single-scene numbers of the mid-term checkpoint above, which used a different intensity rule.</p>
 <p>Every number below uses one protocol: 1,024-frame bursts, groups of 64, the last group as reference, one fixed gain of 2.7 for every method, and the same aligner and photon cube for naive averaging, aligned averaging and TAA. PSNR and SSIM are computed on the reconstructed frame, the full frame unless a crop is stated. The first experiment is the broad one: 31 real bursts from 29 training scenes, grouped by how far the scene moves during the burst.</p>
 
 <h3>Real bursts, grouped by measured motion</h3>
@@ -320,26 +341,10 @@
 <img src="assets/result-compare.png" alt="Five panels for burst 0 of kitchen1: ground truth, naive average, aligned to first group, aligned to last group, and TAA with last-group reference" style="width:100%;border:1px solid var(--border);border-radius:4px;display:block">
 <figcaption><strong>Figure 4.</strong> Burst 0 of <code>kitchen1</code>. Naive averaging blurs the moving scene. Aligning to the first group is sharp but offset from the ground truth. Aligning to the last group matches it, with visible photon noise. Default TAA (also last-group reference) is noisier still.</figcaption>
 </figure>
-<details>
-<summary>Mid-term table (per-image gain, superseded)</summary>
-<p>The mid-term report used one least-squares gain per image before PSNR. That rule is not comparable with the fixed gain of 2.7 used everywhere above, and is kept only for reference. Same scene and crop; PSNR in dB.</p>
-<table class="results-table">
-<thead>
-<tr><th>PSNR (dB)</th><th>Burst 0</th><th>Burst 1</th><th>Burst 10</th></tr>
-</thead>
-<tbody>
-<tr><td>Naive average</td><td>16.2</td><td>14.7</td><td>16.8</td></tr>
-<tr><td>Aligned, first-group reference</td><td>14.0</td><td>12.5</td><td>13.9</td></tr>
-<tr><td>Aligned, last-group reference</td><td><strong>19.7</strong></td><td><strong>19.1</strong></td><td><strong>19.3</strong></td></tr>
-<tr><td>Clamp only, last-group reference</td><td>19.7</td><td>18.5</td><td>19.3</td></tr>
-<tr><td>TAA (default), last-group reference</td><td>17.3</td><td>15.3</td><td>18.3</td></tr>
-</tbody>
-</table>
-</details>
 <p class="pdf-link"><a href="https://github.com/1immy/cs566-project/blob/main/docs/findings/final-results.md">Full per-bin tables and sign tests (repository)</a></p>
 </section>
 <section id="discussion">
-          <h2>Discussion</h2>
+          <h2>Discussion <span class="date">(Nov 23, 2026)</span></h2>
           <h3>What the results show</h3>
           <ul>
           <li><strong>The reference frame matters more than anything TAA adds.</strong> The ground truth is the pose at the end of the burst. Aligning the groups to the last group beats naive averaging by 1.6&nbsp;dB on <code>kitchen1</code>, and aligning to the first group is 1.5&nbsp;dB worse than not aligning at all.</li>
