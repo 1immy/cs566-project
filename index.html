@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,600&family=Inter:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261029">
+<link rel="stylesheet" href="style.css?v=20261123">
 </head>
 <body>
 
@@ -229,24 +229,78 @@
 </section>
 <section id="results">
 <h2>Results</h2>
-<p>Scene <code>kitchen1</code>, bursts 0, 1 and 10, a 300&times;304 central crop, all 1,024 frames, groups of 64. Each reconstruction is multiplied by one least-squares gain before PSNR, because the ground truth is much brighter than the photon average. This rule is preliminary, and the results come from one scene with no held-out data, so they are indicative, not a benchmark.</p>
-<figure class="diagram">
-<img src="assets/result-compare.png" alt="Five panels for burst 0 of kitchen1: ground truth, naive average, aligned to first group, aligned to last group, and TAA with last-group reference" style="width:100%;border:1px solid var(--border);border-radius:4px;display:block">
-<figcaption><strong>Figure 2.</strong> Burst 0 of <code>kitchen1</code>. Naive averaging blurs the moving scene. Aligning to the first group is sharp but offset from the ground truth. Aligning to the last group matches it, with visible photon noise. Default TAA (also last-group reference) is noisier still.</figcaption>
-</figure>
-<table class="results-table">
+<p>Every number below uses one protocol: 1,024-frame bursts, groups of 64, the last group as reference, one fixed gain of 2.7 for every method, and the same aligner and photon cube for naive averaging, aligned averaging and TAA. PSNR and SSIM are computed on the reconstructed frame, the full frame unless a crop is stated. The first experiment is the broad one: 31 real bursts from 29 training scenes, grouped by how far the scene moves during the burst.</p>
+
+<h3>Real bursts, grouped by measured motion</h3>
+<p>We measured the drift of 100 bursts (bursts 0 and 1 of the 50 training scenes) by phase correlation between the first and last 256-frame windows, split them into slow, medium and fast thirds (edges 12.8 and 37.8&nbsp;px), and reconstructed 31 of them at full resolution, 10 or 11 per bin. Thirty were chosen as the bursts closest to each bin&rsquo;s median (distinct scenes first); the thirty-first, <code>attic</code>&nbsp;0, was run earlier and kept. Values are mean (standard deviation) over the bursts of a bin. Different bins contain different scenes, so compare methods within a row, not a method across rows.</p>
+<div style="overflow-x:auto">
+<table class="results-table" style="white-space:nowrap">
 <thead>
-<tr><th>PSNR (dB)</th><th>Burst 0</th><th>Burst 1</th><th>Burst 10</th></tr>
+<tr><th>Motion bin</th><th>n</th><th>Drift (px)</th><th>PSNR naive</th><th>PSNR aligned</th><th>PSNR TAA</th><th>SSIM naive</th><th>SSIM aligned</th><th>SSIM TAA</th></tr>
 </thead>
 <tbody>
-<tr><td>Naive average</td><td>16.2</td><td>14.7</td><td>16.8</td></tr>
-<tr><td>Aligned, first-group reference</td><td>14.0</td><td>12.5</td><td>13.9</td></tr>
-<tr><td>Aligned, last-group reference</td><td><strong>19.7</strong></td><td><strong>19.1</strong></td><td><strong>19.3</strong></td></tr>
-<tr><td>Clamp only, last-group reference</td><td>19.7</td><td>18.5</td><td>19.3</td></tr>
-<tr><td>TAA (default), last-group reference</td><td>17.3</td><td>15.3</td><td>18.3</td></tr>
+<tr><td>Slow</td><td>10</td><td>3.0&ndash;6.5</td><td>15.02 (1.83)</td><td>15.49 (1.71)</td><td>15.45 (1.60)</td><td>0.330 (0.049)</td><td>0.437 (0.094)</td><td>0.381 (0.068)</td></tr>
+<tr><td>Medium</td><td>11</td><td>18.7&ndash;32.0</td><td>14.46 (2.50)</td><td>15.26 (2.31)</td><td>15.26 (2.52)</td><td>0.293 (0.119)</td><td>0.395 (0.147)</td><td>0.325 (0.141)</td></tr>
+<tr><td>Fast</td><td>10</td><td>48.9&ndash;56.4</td><td>13.59 (3.11)</td><td>14.64 (2.82)</td><td>14.93 (3.06)</td><td>0.296 (0.134)</td><td>0.361 (0.129)</td><td>0.269 (0.117)</td></tr>
+<tr><td>All bursts</td><td>31</td><td>3.0&ndash;56.4</td><td>14.36 (2.52)</td><td>15.14 (2.27)</td><td>15.22 (2.39)</td><td>0.306 (0.106)</td><td>0.398 (0.126)</td><td>0.325 (0.119)</td></tr>
 </tbody>
 </table>
-<p>The evaluation harness reports SSIM as well. The table below uses the same bursts, crop, frames and references, with a fixed gain of 2.7 for every method and the current aligner (which adds sub-pixel refinement). These numbers are <em>not</em> comparable with the table above, which fits one gain per image. The baseline ordering is the same: last-group alignment beats naive averaging by 1.6&nbsp;dB on average, and the first-group reference is 1.5&nbsp;dB worse. TAA is within 0.2&nbsp;dB of last-group alignment in PSNR, but its SSIM is 0.03 to 0.04 lower on every burst. We have not yet isolated whether the gain rule or the improved aligner closes the PSNR gap.</p>
+</div>
+<p>Paired differences per burst, with a seeded bootstrap 95% interval over bursts:</p>
+<div style="overflow-x:auto">
+<table class="results-table" style="white-space:nowrap">
+<thead>
+<tr><th>Motion bin</th><th>n</th><th>TAA &minus; aligned<br>PSNR (dB)</th><th>TAA &minus; aligned<br>SSIM</th><th>Aligned &minus; naive<br>PSNR (dB)</th><th>Aligned &minus; naive<br>SSIM</th></tr>
+</thead>
+<tbody>
+<tr><td>Slow</td><td>10</td><td>&minus;0.04 [&minus;0.26, +0.12]</td><td>&minus;0.056 [&minus;0.085, &minus;0.033]</td><td>+0.48 [+0.30, +0.67]</td><td>+0.107 [+0.060, +0.152]</td></tr>
+<tr><td>Medium</td><td>11</td><td>+0.00 [&minus;0.36, +0.34]</td><td>&minus;0.070 [&minus;0.092, &minus;0.049]</td><td>+0.80 [+0.43, +1.25]</td><td>+0.102 [+0.067, +0.136]</td></tr>
+<tr><td>Fast</td><td>10</td><td>+0.29 [&minus;0.39, +0.95]</td><td>&minus;0.092 [&minus;0.118, &minus;0.063]</td><td>+1.05 [+0.59, +1.55]</td><td>+0.065 [+0.038, +0.089]</td></tr>
+<tr><td>All bursts</td><td>31</td><td>+0.08 [&minus;0.18, +0.34]</td><td>&minus;0.073 [&minus;0.088, &minus;0.058]</td><td>+0.78 [+0.55, +1.03]</td><td>+0.092 [+0.069, +0.113]</td></tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li><strong>TAA and alignment have the same PSNR on average</strong> (+0.08&nbsp;dB over all bursts, interval from &minus;0.18 to +0.34). TAA is ahead on 14 bursts and behind on 17 (exact sign test, p&nbsp;=&nbsp;0.72), so there is no consistent winner.</li>
+<li><strong>TAA has lower SSIM than alignment on every one of the 31 bursts</strong> (&minus;0.073 on average, interval &minus;0.088 to &minus;0.058; sign test p&nbsp;&lt;&nbsp;0.001), and in every bin. The deficit is &minus;0.056 for slow, &minus;0.070 for medium and &minus;0.092 for fast bursts; the slow and fast intervals overlap, so we do not claim it grows with speed.</li>
+<li><strong>Alignment beats naive averaging</strong> by 0.78&nbsp;dB PSNR and 0.092 SSIM on average. The PSNR gain rises from 0.48 to 0.80 to 1.05&nbsp;dB from slow to fast bins, while the SSIM gain falls from 0.107 to 0.065.</li>
+</ul>
+<figure class="diagram">
+<img src="assets/final-comparison-frames.jpg" alt="Six rows of real bursts, each showing ground truth, naive average, aligned average and TAA reconstructions with PSNR and SSIM under each" style="width:100%;border:1px solid var(--border);border-radius:4px;display:block">
+<figcaption><strong>Figure 2.</strong> Real bursts at full frame: ground truth, naive, aligned and TAA, with PSNR and SSIM under each. The rows are not hand-picked: in each motion bin they are the burst where TAA gains most over alignment in PSNR and the one where it loses most. <code>bathroom3</code>&nbsp;1 (fast) is the clearest TAA case: alignment leaves blocky tile artifacts and TAA is smoother, 2.1&nbsp;dB higher, although its SSIM is lower. <code>bathroom5</code>&nbsp;1 and <code>ultramodern</code>&nbsp;0 are mostly noise for every method at this photon level, and TAA is the noisier of the two aligned reconstructions. A second figure with one fixed 280&nbsp;px window per tile is in the <a href="assets/final-comparison-crops.jpg">here</a>.</figcaption>
+</figure>
+<figure class="diagram">
+<img src="assets/final-delta-by-bin.png" alt="TAA minus aligned, PSNR and SSIM, per motion bin with bootstrap intervals" style="width:100%;border:1px solid var(--border);border-radius:4px;display:block">
+<figcaption><strong>Figure 3.</strong> TAA minus aligned per motion bin, with bootstrap 95% intervals over bursts. The PSNR intervals include zero in every bin; the SSIM intervals lie below zero in every bin.</figcaption>
+</figure>
+<p><strong>Caveat on the bins.</strong> 80 of the 100 measured bursts, and 26 of the 31 reconstructed ones, have a weak phase-correlation peak (below 0.05), and every burst with a good peak has a measured drift under about 19&nbsp;px. Large motion smears the window averages and lowers the peak, so the drift of the medium and fast bursts may be real but coarsely measured, or partly noise; we cannot separate the two. Read &ldquo;fast&rdquo; as &ldquo;large measured drift&rdquo;, not as a known speed.</p>
+
+<h3>Controlled speed: simulated and rendered sweeps</h3>
+<p>To see the effect of speed with the true motion known, we built two sweeps with a known pan: a seeded simulator that translates one <code>kitchen1</code> ground-truth image (128&times;128, one seed), and a Blender-rendered pan over a noise texture (128&times;128, one scene, one seed, one burst per speed). Both draw binary frames from the same Bernoulli model and are scored with the same protocol. The &ldquo;measured&rdquo; drift is about three quarters of the nominal value, because it spans only the 768 frames between window centres.</p>
+<div style="overflow-x:auto">
+<table class="results-table">
+<thead>
+<tr><th rowspan="2">Nominal drift (px)</th><th colspan="3">Seeded simulator on a <code>kitchen1</code> image (PSNR, dB)</th><th colspan="3">Blender-rendered pan (PSNR, dB)</th></tr>
+<tr><th>Naive</th><th>Aligned</th><th>TAA</th><th>Naive</th><th>Aligned</th><th>TAA</th></tr>
+</thead>
+<tbody>
+<tr><td>0</td><td>32.84</td><td>33.06</td><td>32.63</td><td>30.03</td><td>28.20</td><td>28.06</td></tr>
+<tr><td>2</td><td>24.67</td><td>32.26</td><td>31.68</td><td>15.36</td><td>25.25</td><td>24.78</td></tr>
+<tr><td>5</td><td>20.29</td><td>31.52</td><td>30.73</td><td>12.93</td><td>24.09</td><td>23.49</td></tr>
+<tr><td>10</td><td>18.10</td><td>30.15</td><td>29.28</td><td>12.83</td><td>21.65</td><td>21.32</td></tr>
+<tr><td>20</td><td>16.38</td><td>27.16</td><td>26.55</td><td>12.78</td><td>18.08</td><td>17.91</td></tr>
+<tr><td>40</td><td>14.73</td><td>22.42</td><td><strong>23.23</strong></td><td>12.75</td><td>14.80</td><td>14.65</td></tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>Naive averaging collapses within a few pixels (24.7&nbsp;dB at 2&nbsp;px against 32.8&nbsp;dB static, simulated). Alignment degrades slowly and is far ahead from 2&nbsp;px on.</li>
+<li>TAA is below alignment in PSNR at every speed in the rendered sweep, and from 0 to 20&nbsp;px in the simulated one. Only at 40&nbsp;px in the simulated sweep is it ahead (23.2 against 22.4&nbsp;dB), and its SSIM is still lower there. The two sweeps disagree on that single point, so we do not read it as a result.</li>
+<li>These sweeps are single scenes and single seeds. They model only photon noise and a global translation (no disocclusion, parallax or lighting change), so they show how the methods respond to speed, not how real scenes behave.</li>
+</ul>
+
+<h3>Which part of TAA matters: kitchen1 ablation</h3>
+<p>Scene <code>kitchen1</code>, bursts 0, 1 and 10, a 300&times;304 central crop, all 1,024 frames, groups of 64, with the same fixed-gain protocol and the current sub-pixel aligner.</p>
 <div style="overflow-x:auto">
 <table class="results-table">
 <thead>
@@ -261,11 +315,48 @@
 </tbody>
 </table>
 </div>
-<p class="tbd">Still to come: held-out scenes and the PSNR / SSIM versus motion speed sweep (planned for Weeks 6&ndash;8).</p>
+<p>Aligning to the last group, which is the pose of the ground truth, is 1.6&nbsp;dB better than naive averaging on average, and aligning to the first group is 1.5&nbsp;dB worse. Neighbourhood clamping alone matches alignment; the full TAA configuration is within 0.2&nbsp;dB in PSNR and about 0.04 lower in SSIM, the same pattern as the broad result above.</p>
+<figure class="diagram">
+<img src="assets/result-compare.png" alt="Five panels for burst 0 of kitchen1: ground truth, naive average, aligned to first group, aligned to last group, and TAA with last-group reference" style="width:100%;border:1px solid var(--border);border-radius:4px;display:block">
+<figcaption><strong>Figure 4.</strong> Burst 0 of <code>kitchen1</code>. Naive averaging blurs the moving scene. Aligning to the first group is sharp but offset from the ground truth. Aligning to the last group matches it, with visible photon noise. Default TAA (also last-group reference) is noisier still.</figcaption>
+</figure>
+<details>
+<summary>Mid-term table (per-image gain, superseded)</summary>
+<p>The mid-term report used one least-squares gain per image before PSNR. That rule is not comparable with the fixed gain of 2.7 used everywhere above, and is kept only for reference. Same scene and crop; PSNR in dB.</p>
+<table class="results-table">
+<thead>
+<tr><th>PSNR (dB)</th><th>Burst 0</th><th>Burst 1</th><th>Burst 10</th></tr>
+</thead>
+<tbody>
+<tr><td>Naive average</td><td>16.2</td><td>14.7</td><td>16.8</td></tr>
+<tr><td>Aligned, first-group reference</td><td>14.0</td><td>12.5</td><td>13.9</td></tr>
+<tr><td>Aligned, last-group reference</td><td><strong>19.7</strong></td><td><strong>19.1</strong></td><td><strong>19.3</strong></td></tr>
+<tr><td>Clamp only, last-group reference</td><td>19.7</td><td>18.5</td><td>19.3</td></tr>
+<tr><td>TAA (default), last-group reference</td><td>17.3</td><td>15.3</td><td>18.3</td></tr>
+</tbody>
+</table>
+</details>
+<p class="pdf-link"><a href="https://github.com/1immy/cs566-project/blob/main/docs/findings/final-results.md">Full per-bin tables and sign tests (repository)</a></p>
 </section>
 <section id="discussion">
           <h2>Discussion</h2>
-          <p>Preliminary reading: when alignment is accurate, displacement-based history rejection hurts rather than helps. The full failure analysis across motion speed has not yet been run, and this section will be completed after it.</p>
+          <h3>What the results show</h3>
+          <ul>
+          <li><strong>The reference frame matters more than anything TAA adds.</strong> The ground truth is the pose at the end of the burst. Aligning the groups to the last group beats naive averaging by 1.6&nbsp;dB on <code>kitchen1</code>, and aligning to the first group is 1.5&nbsp;dB worse than not aligning at all.</li>
+          <li><strong>Beyond alignment, TAA history rejection gives no consistent PSNR gain and costs SSIM.</strong> Over 31 real bursts the mean PSNR difference is +0.08&nbsp;dB with an interval that spans zero, and TAA has lower SSIM than alignment on every burst.</li>
+          <li><strong>TAA helps on some bursts and hurts on others.</strong> It is 1 to 2&nbsp;dB ahead on three fast bursts where alignment leaves blocky artifacts (for example <code>bathroom3</code>&nbsp;1), and 1 to 2&nbsp;dB behind on very noisy ones (<code>ultramodern</code>&nbsp;0, <code>bathroom5</code>&nbsp;1). We do not have a rule that predicts which.</li>
+          <li><strong>We did not find a speed at which TAA clearly fails or clearly wins on real data.</strong> The SSIM deficit is present in every bin, and the PSNR difference stays inside its interval in every bin.</li>
+          </ul>
+          <h3>Why, and what we did not test</h3>
+          <p>The mid-term result was that a displacement-based confidence discards correct frames once alignment has compensated the motion, so history rejection removes information it should keep; the component controls on <code>kitchen1</code> are consistent with that (clamping alone matches alignment, the full configuration does not). We think a second reason is that TAA retains more grain than plain averaging of aligned groups, which SSIM penalises more than PSNR does, and it would explain why TAA can look cleaner to the eye and still score lower in SSIM. We did not test this. A confidence based on the alignment residual, planned at mid-term, was not implemented or evaluated in this project.</p>
+          <h3>Limits</h3>
+          <ul>
+          <li><strong>Measured speed is unreliable for medium and fast bursts.</strong> 26 of the 31 reconstructed bursts have a weak motion estimate, so the bins show large measured drift, not a known speed. The controlled sweeps know the speed but are one scene and one seed each, and the simulated and the rendered sweep disagree about TAA at 40&nbsp;px.</li>
+          <li><strong>Small samples.</strong> Ten or eleven bursts per bin, two of 29 scenes contributing two bursts, and bootstrap intervals that are close to the range of the observed differences.</li>
+          <li><strong>One intensity rule.</strong> A fixed gain of 2.7 for every scene may fit some scenes poorly, which compresses all differences; PSNR on the real bursts is 11 to 22&nbsp;dB.</li>
+          <li><strong>Simple motion model.</strong> The sweeps model only photon noise and a global translation; real scenes also contain disocclusion, parallax and local motion.</li>
+          <li><strong>Training scenes only.</strong> The five test scenes have no public ground truth, so every number comes from training scenes.</li>
+          </ul>
         </section>
 
         <section id="presentation">
@@ -285,7 +376,7 @@
     </main>
 
     <footer>
-      <p>CS 566, Fall 2026 &middot; Last updated: October 29, 2026</p>
+      <p>CS 566, Fall 2026 &middot; Last updated: November 23, 2026</p>
     </footer>
 
   </div>
